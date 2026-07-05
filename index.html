@@ -3,41 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlowScape | Immersive Scroll Experience</title>
+    <title>Abstract Flow | Glass Sidebar & Scroll Video</title>
     <style>
         :root {
-            /* Core palette */
-            --bg-deep: #0a0a00;
-            --glass-bg: rgba(20, 20, 20, 0.35);
-            --glass-border: rgba(255, 255, 255, 0.12);
+            --card-bg: rgba(0, 0, 0, 0.2);
+            --card-border: rgba(255, 255, 255, 0.1);
             --text-primary: #ffffff;
             --text-secondary: rgba(255, 255, 255, 0.85);
             --accent: #a8ff3e;
             --accent-glow: rgba(168, 255, 62, 0.6);
-            --accent-dim: rgba(168, 255, 62, 0.2);
-
-            /* Spacing */
-            --sidebar-width: 240px;
-            --content-padding: 20px;
-
-            /* Transitions */
-            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-            --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-
-            /* Shadows */
-            --shadow-card: 0 20px 50px rgba(0,0,0,0.5);
-            --shadow-glow: 0 0 30px var(--accent-glow);
-        }
-
-        /* Light theme overrides (activated via class) */
-        body.light-theme {
-            --bg-deep: #f5f5f0;
-            --glass-bg: rgba(255, 255, 255, 0.6);
-            --glass-border: rgba(0, 0, 0, 0.1);
-            --text-primary: #1a1a1a;
-            --text-secondary: rgba(0, 0, 0, 0.75);
-            --accent: #2d7a2d;
-            --accent-glow: rgba(45, 122, 45, 0.4);
         }
 
         * {
@@ -47,54 +21,20 @@
         }
 
         html {
-            scroll-behavior: auto; /* We manage smoothness */
+            scroll-behavior: auto;
         }
 
         body {
             font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: var(--bg-deep);
+            background: #0a0a00;
             color: var(--text-primary);
             overflow-x: hidden;
             min-height: 100vh;
-            height: 16000px; /* Extended for richer content */
+            height: 12000px;
             position: relative;
             -webkit-font-smoothing: antialiased;
-            cursor: none; /* We'll use a custom cursor */
-            transition: background 0.4s, color 0.4s;
-        }
-
-        /* ============ CUSTOM CURSOR ============ */
-        .cursor {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 24px;
-            height: 24px;
-            border: 2px solid var(--accent);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9999;
-            transition: transform 0.15s ease, width 0.15s, height 0.15s, border-color 0.3s;
-            mix-blend-mode: difference;
-        }
-        .cursor-dot {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 6px;
-            height: 6px;
-            background: var(--accent);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 10000;
-            transition: transform 0.08s ease-out;
-            mix-blend-mode: difference;
-        }
-        .cursor.hover {
-            width: 48px;
-            height: 48px;
-            border-color: #fff;
-            transform: translate(-50%, -50%) scale(0.8);
+            cursor: default;
+            transition: height 0.3s ease;
         }
 
         /* ============ VIDEO BACKGROUND ============ */
@@ -124,13 +64,13 @@
             height: 100vh;
             z-index: -1;
             pointer-events: none;
-            background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.7) 100%),
-                        linear-gradient(180deg, rgba(0,0,0,0.5) 0%, rgba(0,10,0,0.3) 30%, rgba(0,0,0,0.4) 60%, rgba(0,5,0,0.6) 100%);
-            transition: background 0.4s;
-        }
-        body.light-theme .video-overlay {
-            background: radial-gradient(ellipse at center, transparent 30%, rgba(255,255,255,0.5) 100%),
-                        linear-gradient(180deg, rgba(255,255,255,0.3) 0%, rgba(245,245,240,0.1) 30%, rgba(255,255,255,0.2) 60%, rgba(245,245,240,0.4) 100%);
+            background:
+                radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, 0.65) 100%),
+                linear-gradient(180deg,
+                    rgba(0, 0, 0, 0.5) 0%,
+                    rgba(0, 10, 0, 0.3) 30%,
+                    rgba(0, 0, 0, 0.4) 60%,
+                    rgba(0, 5, 0, 0.6) 100%);
         }
         .vignette {
             position: fixed;
@@ -140,11 +80,7 @@
             height: 100vh;
             z-index: -1;
             pointer-events: none;
-            box-shadow: inset 0 0 200px 80px rgba(0,0,0,0.55);
-            transition: box-shadow 0.4s;
-        }
-        body.light-theme .vignette {
-            box-shadow: inset 0 0 200px 80px rgba(0,0,0,0.1);
+            box-shadow: inset 0 0 200px 80px rgba(0, 0, 0, 0.55);
         }
 
         /* ============ PLAYBACK INDICATOR ============ */
@@ -153,33 +89,56 @@
             top: 20px;
             right: 20px;
             z-index: 1000;
-            background: var(--glass-bg);
+            background: rgba(0, 0, 0, 0.55);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--accent-dim);
+            border: 1px solid rgba(168, 255, 62, 0.3);
             border-radius: 20px;
             padding: 8px 16px;
             font-size: 0.75rem;
             letter-spacing: 0.05em;
-            color: var(--text-primary);
+            color: rgba(255, 255, 255, 0.9);
             display: flex;
             align-items: center;
             gap: 8px;
             pointer-events: none;
             transition: all 0.3s;
-            box-shadow: var(--shadow-glow);
+            box-shadow: 0 0 20px rgba(168, 255, 62, 0.15);
         }
         .playback-indicator .dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: var(--accent);
-            box-shadow: 0 0 14px var(--accent-glow);
+            background: #a8ff3e;
+            box-shadow: 0 0 14px rgba(168, 255, 62, 0.9);
             animation: pulse-dot 1.8s ease-in-out infinite;
         }
+        .playback-indicator.reversing .dot {
+            background: #ffb800;
+            box-shadow: 0 0 14px rgba(255, 184, 0, 0.9);
+            animation: pulse-dot-reverse 1.8s ease-in-out infinite;
+        }
         @keyframes pulse-dot {
-            0%,100% { transform: scale(1); opacity: 0.9; }
-            50% { transform: scale(1.8); opacity: 0.4; }
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.9;
+            }
+            50% {
+                transform: scale(1.8);
+                opacity: 0.4;
+            }
+        }
+        @keyframes pulse-dot-reverse {
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.9;
+            }
+            50% {
+                transform: scale(0.6);
+                opacity: 0.4;
+            }
         }
 
         /* ============ SCROLL PROGRESS BAR ============ */
@@ -191,12 +150,12 @@
             background: var(--accent);
             z-index: 1000;
             border-radius: 0 3px 0 0;
-            box-shadow: 0 0 16px var(--accent-glow);
+            box-shadow: 0 0 16px var(--accent-glow), 0 0 40px var(--accent-glow);
             transition: width 0.08s linear;
             pointer-events: none;
         }
 
-        /* ============ SPEED INDICATOR ============ */
+        /* ============ SCROLL SPEED INDICATOR ============ */
         .speed-indicator {
             position: fixed;
             bottom: 30px;
@@ -207,260 +166,332 @@
             align-items: center;
             gap: 10px;
             pointer-events: none;
-            transition: opacity 0.6s;
+            transition: opacity 0.6s ease;
+            opacity: 1;
+        }
+        .speed-indicator.hidden {
+            opacity: 0;
         }
         .speed-bar-container {
-            width: 80px; height: 2px; background: rgba(255,255,255,0.15); border-radius: 2px; overflow: hidden;
+            width: 80px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            overflow: hidden;
         }
         .speed-bar-fill {
-            height: 100%; background: var(--accent); width: 0%; border-radius: 2px; box-shadow: 0 0 10px var(--accent-glow);
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.2s ease;
+            border-radius: 2px;
+            box-shadow: 0 0 10px var(--accent-glow);
         }
         .speed-label {
-            font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-secondary); white-space: nowrap;
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.7);
+            white-space: nowrap;
         }
 
         /* ============ GLASS SIDEBAR ============ */
         .sidebar {
             position: fixed;
-            top: 0; left: 0;
-            width: var(--sidebar-width);
+            top: 0;
+            left: 0;
+            width: 240px;
             height: 100vh;
             z-index: 900;
-            background: var(--glass-bg);
+            background: rgba(20, 20, 20, 0.35);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-right: 1px solid var(--glass-border);
-            box-shadow: 4px 0 30px rgba(0,0,0,0.4);
-            display: flex; flex-direction: column;
+            border-right: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 4px 0 30px rgba(0, 0, 0, 0.4), inset -1px 0 0 rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-direction: column;
             padding: 30px 0;
-            transition: transform 0.3s var(--ease-out-expo), background 0.4s;
+            transition: transform 0.3s ease;
         }
         .sidebar-logo {
             padding: 0 24px 30px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             margin-bottom: 20px;
-            font-size: 1.5rem; font-weight: 700;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
             color: #fff;
-            text-shadow: 0 0 20px var(--accent-glow);
+            text-shadow: 0 0 20px rgba(168, 255, 62, 0.3);
         }
         .sidebar-nav {
-            list-style: none; flex: 1; padding: 0 12px;
+            list-style: none;
+            flex: 1;
+            padding: 0 12px;
         }
-        .sidebar-nav li { margin-bottom: 8px; }
+        .sidebar-nav li {
+            margin-bottom: 8px;
+        }
         .sidebar-nav a {
-            display: flex; align-items: center; gap: 12px;
-            padding: 12px 16px; border-radius: 14px;
-            color: var(--text-secondary);
-            text-decoration: none; font-size: 0.95rem; font-weight: 500;
-            transition: all 0.25s; background: transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.25s ease;
+            background: transparent;
+            letter-spacing: 0.02em;
         }
-        .sidebar-nav a:hover,
+        .sidebar-nav a:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(168, 255, 62, 0.2);
+            border-left: 3px solid var(--accent);
+            padding-left: 13px;
+        }
         .sidebar-nav a.active {
             background: rgba(168, 255, 62, 0.12);
             color: #fff;
             border-left: 3px solid var(--accent);
             padding-left: 13px;
-            box-shadow: 0 0 20px var(--accent-dim);
+            box-shadow: 0 0 20px rgba(168, 255, 62, 0.15);
+        }
+        .sidebar-nav .icon {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
         }
 
-        /* ============ MAIN CONTENT ============ */
+        /* ============ CONTENT SECTIONS ============ */
         .content-layer {
-            position: relative; z-index: 10; pointer-events: none;
-            margin-left: var(--sidebar-width);
-            height: 100%;
+            position: relative;
+            z-index: 10;
+            pointer-events: none;
+            margin-left: 240px; /* offset for sidebar */
         }
         .section {
-            position: absolute; left: 0; width: 100%;
+            position: absolute;
+            left: 0;
+            width: 100%;
             min-height: 100vh;
-            display: flex; align-items: center; justify-content: center;
-            pointer-events: none; perspective: 1200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            perspective: 1200px;
+            z-index: 10;
         }
         .section-card {
             pointer-events: auto;
-            background: var(--glass-bg);
+            background: var(--card-bg);
             backdrop-filter: blur(30px);
-            border: 1px solid var(--glass-border);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--card-border);
             border-radius: 24px;
             padding: 48px 44px;
-            max-width: 700px;
+            max-width: 650px; /* slightly wider for more text */
             width: 90%;
             text-align: center;
-            box-shadow: var(--shadow-card);
-            transition: box-shadow 0.5s, background 0.4s;
+            box-shadow:
+                0 20px 50px rgba(0, 0, 0, 0.5),
+                0 0 30px rgba(168, 255, 62, 0.08),
+                0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+            will-change: transform, opacity;
+            transition: box-shadow 0.5s ease;
+            position: relative;
+            overflow: hidden;
         }
         .section-card.hero-card {
-            max-width: 800px; padding: 60px 50px;
+            max-width: 750px;
+            padding: 56px 48px;
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(35px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .section-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(ellipse at center,
+                    rgba(168, 255, 62, 0.04) 0%,
+                    transparent 70%);
+            pointer-events: none;
+        }
+        .section-card .icon {
+            font-size: 3.2rem;
+            margin-bottom: 14px;
+            display: block;
+            filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5));
         }
         .section-card h2 {
-            font-size: 2.2rem; font-weight: 700; margin-bottom: 12px;
-            background: linear-gradient(135deg, #fff, #d4ffa8);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #ffffff 0%, #d4ffa8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        .section-card p { font-size: 1rem; line-height: 1.7; color: var(--text-secondary); margin-bottom: 18px; }
-        .btn {
-            display: inline-block; padding: 12px 30px; border-radius: 50px;
-            background: var(--accent); color: #0a0a00; font-weight: 700;
-            text-decoration: none; transition: all 0.3s; box-shadow: 0 8px 30px var(--accent-glow);
-            cursor: pointer; border: none; letter-spacing: 0.04em;
+        .section-card .subtitle {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.75);
+            margin-bottom: 20px;
+            font-style: italic;
         }
-        .btn:hover { transform: translateY(-3px); box-shadow: 0 14px 40px var(--accent-glow); }
-
-        /* ============ MODAL SYSTEM ============ */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
-            z-index: 2000; display: flex; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        .section-card p {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 18px;
         }
-        .modal-overlay.active { opacity: 1; pointer-events: all; }
-        .modal {
-            background: var(--glass-bg); backdrop-filter: blur(30px);
-            border: 1px solid var(--glass-border); border-radius: 24px;
-            padding: 40px; max-width: 500px; width: 90%; position: relative;
-            box-shadow: var(--shadow-card); color: var(--text-primary);
-        }
-        .modal h3 { font-size: 1.8rem; margin-bottom: 20px; }
-        .modal-close {
-            position: absolute; top: 20px; right: 20px;
-            background: none; border: none; color: var(--text-primary); font-size: 1.5rem;
+        .section-card .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 50px;
+            background: var(--accent);
+            color: #0a0a00;
+            text-decoration: none;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 30px var(--accent-glow);
+            border: none;
             cursor: pointer;
+            margin-top: 8px;
         }
-
-        /* ============ THEME TOGGLE (in sidebar) ============ */
-        .theme-toggle {
-            margin: 20px 24px; display: flex; align-items: center; gap: 10px;
-            color: var(--text-secondary); font-size: 0.85rem;
+        .section-card .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 40px rgba(168, 255, 62, 0.8);
+            background: #bfff5e;
         }
-        .switch {
-            width: 50px; height: 26px; background: rgba(255,255,255,0.2); border-radius: 13px;
-            position: relative; cursor: pointer; transition: background 0.3s;
-        }
-        .switch.active { background: var(--accent); }
-        .switch::after {
-            content: ''; position: absolute; top: 3px; left: 3px;
-            width: 20px; height: 20px; background: #fff; border-radius: 50%;
-            transition: transform 0.3s;
-        }
-        .switch.active::after { transform: translateX(24px); }
 
         /* ============ RESPONSIVE ============ */
         @media (max-width: 768px) {
-            .sidebar { width: 200px; }
-            .content-layer { margin-left: 200px; }
+            .sidebar {
+                width: 200px;
+            }
+            .content-layer {
+                margin-left: 200px;
+            }
+            .section-card {
+                padding: 32px 22px;
+                max-width: 88%;
+            }
+            .section-card h2 {
+                font-size: 1.6rem;
+            }
+            .playback-indicator {
+                top: 12px;
+                right: 12px;
+                padding: 6px 12px;
+                font-size: 0.7rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .sidebar {
+                width: 180px;
+                padding: 20px 0;
+            }
+            .sidebar-nav a {
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+            .content-layer {
+                margin-left: 180px;
+            }
+            .section-card {
+                padding: 24px 16px;
+            }
         }
     </style>
 </head>
-<body class="dark-theme">
-    <!-- Custom Cursor Elements -->
-    <div class="cursor" id="cursor"></div>
-    <div class="cursor-dot" id="cursorDot"></div>
+<body>
 
-    <!-- Video Background -->
+    <!-- ============ VIDEO BACKGROUND ============ -->
     <div class="video-background" id="videoContainer">
         <video id="bgVideo" preload="auto" muted playsinline loop crossorigin="anonymous"
             src="videos/video1.mp4">
+            <source src="videos/video1.mp4" type="video/mp4">
         </video>
     </div>
     <div class="video-overlay"></div>
     <div class="vignette"></div>
 
-    <!-- Playback Indicator -->
+    <!-- ============ GLASS SIDEBAR ============ -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">✦ FlowScape</div>
+        <ul class="sidebar-nav">
+            <li><a href="#" class="active"><span class="icon">🏠</span> Home</a></li>
+            <li><a href="#"><span class="icon">🛍️</span> Shop</a></li>
+            <li><a href="#"><span class="icon">⚙️</span> Settings</a></li>
+            <li><a href="#"><span class="icon">👤</span> Profile</a></li>
+        </ul>
+    </aside>
+
+    <!-- ============ PLAYBACK INDICATOR ============ -->
     <div class="playback-indicator" id="playbackIndicator">
         <div class="dot"></div>
         <span id="playbackLabel">▶ Flowing</span>
     </div>
+
+    <!-- ============ SCROLL PROGRESS ============ -->
     <div class="scroll-progress" id="scrollProgress"></div>
+
+    <!-- ============ SPEED INDICATOR ============ -->
     <div class="speed-indicator" id="speedIndicator">
         <span class="speed-label">Flow Speed</span>
-        <div class="speed-bar-container"><div class="speed-bar-fill" id="speedBarFill"></div></div>
-    </div>
-
-    <!-- Glass Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-logo">✦ FlowScape</div>
-        <ul class="sidebar-nav">
-            <li><a href="#" class="active" data-page="home"><span>🏠</span> Home</a></li>
-            <li><a href="#" data-page="shop"><span>🛍️</span> Shop</a></li>
-            <li><a href="#" data-page="settings"><span>⚙️</span> Settings</a></li>
-            <li><a href="#" data-page="profile"><span>👤</span> Profile</a></li>
-        </ul>
-        <div class="theme-toggle">
-            <span>🌓 Theme</span>
-            <div class="switch" id="themeSwitch"></div>
+        <div class="speed-bar-container">
+            <div class="speed-bar-fill" id="speedBarFill"></div>
         </div>
-    </aside>
-
-    <!-- Modal Containers -->
-    <div class="modal-overlay" id="shopModal">
-        <div class="modal"><button class="modal-close">✕</button><h3>🛍️ Shop</h3><p>Exclusive digital art and interactive experiences coming soon.</p></div>
-    </div>
-    <div class="modal-overlay" id="settingsModal">
-        <div class="modal"><button class="modal-close">✕</button><h3>⚙️ Settings</h3><p>Customize your flow: video speed, overlay opacity, and more.</p></div>
-    </div>
-    <div class="modal-overlay" id="profileModal">
-        <div class="modal"><button class="modal-close">✕</button><h3>👤 Profile</h3><p>Your journey stats and saved patterns.</p></div>
     </div>
 
-    <!-- Content Sections -->
+    <!-- ============ CONTENT SECTIONS ============ -->
     <div class="content-layer" id="contentLayer">
-        <!-- Hero Section -->
+        <!-- Hero Home Section (more text) -->
         <div class="section" id="homeSection" style="top: 400px;">
             <div class="section-card hero-card">
-                <span>🌌</span>
+                <span class="icon">🌌</span>
                 <h2>Welcome to the Abstract Dimension</h2>
-                <p>Where motion becomes art. Scroll to paint the flow — forward to surge, backward to rewind.</p>
-                <p>Discover the harmony between technology and creativity. The sidebar guides you, the flowing background mesmerizes.</p>
-                <button class="btn" onclick="document.getElementById('aboutSection').scrollIntoView({behavior:'smooth'})">▼ Explore More</button>
+                <p class="subtitle">Where motion becomes art and scroll paints the flow</p>
+                <p>Immerse yourself in an ever‑changing canvas of green and gold. Every scroll you make controls the rhythm of this living artwork — forward to surge ahead, backward to rewind time. This is more than a website; it's an interactive experience that responds to your touch, your speed, your curiosity.</p>
+                <p>Discover the harmony between technology and creativity. The sidebar guides you to curated experiences, while the flowing background keeps you mesmerized. Start scrolling to unleash the full potential of motion‑driven design.</p>
+                <button class="btn" onclick="document.getElementById('section2').scrollIntoView({behavior:'smooth'})">▼ Explore More</button>
             </div>
         </div>
 
-        <!-- About Section -->
-        <div class="section" id="aboutSection" style="top: 2500px;">
+        <!-- Section 2 -->
+        <div class="section" id="section2" style="top: 2800px;">
             <div class="section-card">
-                <span>🎨</span>
+                <span class="icon">🎨</span>
                 <h2>Flowing Energy</h2>
-                <p>Scroll down to accelerate through abstract lines. Speed shapes the pattern — a symphony of motion and color.</p>
-                <div class="counter" data-target="1280">0</div>
-                <p>Lines of code powering this experience</p>
+                <p>Scroll down to accelerate through the abstract lines. The faster you move, the more dynamic the pattern becomes — a true symphony of motion and color.</p>
             </div>
         </div>
 
-        <!-- Services / Gallery Section -->
-        <div class="section" id="servicesSection" style="top: 5000px;">
+        <!-- Section 3 -->
+        <div class="section" id="section3" style="top: 5200px;">
             <div class="section-card">
-                <span>✨</span>
-                <h2>Our Services</h2>
-                <div class="grid-3">
-                    <div class="service-item">🌀 Interactive Video</div>
-                    <div class="service-item">💡 Creative Design</div>
-                    <div class="service-item">🚀 Fast Performance</div>
-                </div>
+                <span class="icon">🔄</span>
+                <h2>Reverse the Flow</h2>
+                <p>Scroll up to rewind the abstract patterns. Watch the lines retreat and reform in perfect symmetry, giving you complete control over time.</p>
             </div>
         </div>
 
-        <!-- Testimonials Section -->
-        <div class="section" id="testimonialsSection" style="top: 7500px;">
+        <!-- Section 4 -->
+        <div class="section" id="section4" style="top: 7600px;">
             <div class="section-card">
-                <span>💬</span>
-                <h2>What People Say</h2>
-                <div class="testimonial-slider">
-                    <p>"Incredible experience — scrolling has never been this immersive."</p>
-                    <p>"The flow control is genius. I feel like I'm conducting a visual orchestra."</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Contact / Footer Section -->
-        <div class="section" id="contactSection" style="top: 10000px;">
-            <div class="section-card">
-                <span>📬</span>
-                <h2>Get In Touch</h2>
-                <form id="contactForm">
-                    <input type="text" placeholder="Your name" required>
-                    <input type="email" placeholder="Email" required>
-                    <textarea placeholder="Message"></textarea>
-                    <button type="submit" class="btn">Send Message</button>
-                </form>
+                <span class="icon">🌟</span>
+                <h2>Infinite Canvas</h2>
+                <p>You are the artist of this digital realm. Every pixel responds to your scroll — explore without limits and create your own visual story.</p>
+                <button class="btn" onclick="scrollToTop()">↻ Begin Again</button>
             </div>
         </div>
     </div>
@@ -478,16 +509,12 @@
             const contentLayer = document.getElementById('contentLayer');
             const sectionCards = document.querySelectorAll('.section-card');
             const sections = document.querySelectorAll('.section');
-            const cursor = document.getElementById('cursor');
-            const cursorDot = document.getElementById('cursorDot');
-            const themeSwitch = document.getElementById('themeSwitch');
-            const body = document.body;
 
-            // ============ STATE ============
+            // ============ STATE VARIABLES ============
             let videoDuration = 13;
-            let bodyHeight = 16000;
+            let bodyHeight = 12000;
             let isVideoReady = false;
-            let lastScrollY = window.scrollY;
+            let lastScrollY = window.scrollY || window.pageYOffset;
             let currentVideoTime = 0;
             let animationFrameId = null;
             let lastTimestamp = 0;
@@ -497,174 +524,312 @@
             const SMOOTHING_FACTOR = 0.15;
             const IDLE_DECAY = 0.92;
             const IDLE_THRESHOLD_MS = 150;
+
             let targetPlaybackRate = 0;
             let currentPlaybackRate = 0;
             let isIdle = true;
             let idleTimeout = null;
+            let lastScrollTimestamp = performance.now();
 
-            // ============ CUSTOM CURSOR ============
-            document.addEventListener('mousemove', (e) => {
-                cursor.style.transform = `translate(${e.clientX - 12}px, ${e.clientY - 12}px)`;
-                cursorDot.style.transform = `translate(${e.clientX - 3}px, ${e.clientY - 3}px)`;
-            });
-            document.querySelectorAll('a, button, .btn, .switch, .modal-close').forEach(el => {
-                el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
-                el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
-            });
-
-            // ============ SIDEBAR NAVIGATION & MODALS ============
-            const navLinks = document.querySelectorAll('.sidebar-nav a');
-            const modals = {
-                shop: document.getElementById('shopModal'),
-                settings: document.getElementById('settingsModal'),
-                profile: document.getElementById('profileModal')
-            };
-            navLinks.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const page = link.dataset.page;
-                    if (page === 'home') {
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    } else if (modals[page]) {
-                        modals[page].classList.add('active');
-                    }
-                    // Update active state
-                    navLinks.forEach(l => l.classList.remove('active'));
-                    link.classList.add('active');
-                });
-            });
-            document.querySelectorAll('.modal-close').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    btn.closest('.modal-overlay').classList.remove('active');
-                });
-            });
-            window.addEventListener('click', (e) => {
-                if (e.target.classList.contains('modal-overlay')) {
-                    e.target.classList.remove('active');
-                }
-            });
-
-            // ============ THEME TOGGLE ============
-            themeSwitch.addEventListener('click', () => {
-                body.classList.toggle('light-theme');
-                themeSwitch.classList.toggle('active');
-                localStorage.setItem('theme', body.classList.contains('light-theme') ? 'light' : 'dark');
-            });
-            if (localStorage.getItem('theme') === 'light') {
-                body.classList.add('light-theme');
-                themeSwitch.classList.add('active');
-            }
-
-            // ============ VIDEO METADATA ============
+            // ============ VIDEO METADATA & INITIALIZATION ============
             function onVideoMetadataLoaded() {
                 videoDuration = bgVideo.duration || 13;
                 if (videoDuration <= 0 || isNaN(videoDuration)) videoDuration = 13;
-                bodyHeight = Math.max(12000, videoDuration * 700 + window.innerHeight * 3);
+                bodyHeight = Math.max(window.innerHeight * 8, videoDuration * 700 + window.innerHeight * 2);
                 document.body.style.height = bodyHeight + 'px';
                 updateSectionPositions();
                 bgVideo.currentTime = 0.1;
                 currentVideoTime = 0.1;
-                bgVideo.play().then(() => { bgVideo.pause(); isVideoReady = true; startPlaybackLoop(); })
-                       .catch(() => { isVideoReady = true; startPlaybackLoop(); });
+                const initVideo = async () => {
+                    try {
+                        await bgVideo.play();
+                        bgVideo.pause();
+                        isVideoReady = true;
+                        console.log('🎨 Abstract lines video ready. Duration:', videoDuration.toFixed(1) + 's');
+                        startPlaybackLoop();
+                    } catch (e) {
+                        console.log('Video play prevented, but ready for scrubbing');
+                        isVideoReady = true;
+                        startPlaybackLoop();
+                    }
+                };
+                initVideo();
             }
+
             function updateSectionPositions() {
-                const usable = bodyHeight - window.innerHeight;
-                const spacing = usable / (sections.length + 1);
-                sections.forEach((sec, i) => sec.style.top = spacing * (i + 1) + 'px');
+                const totalSections = sections.length;
+                const usableHeight = bodyHeight - window.innerHeight;
+                const spacing = usableHeight / (totalSections + 1);
+                sections.forEach((section, index) => {
+                    section.style.top = spacing * (index + 1) + 'px';
+                });
                 contentLayer.style.height = bodyHeight + 'px';
             }
-            bgVideo.addEventListener('loadedmetadata', onVideoMetadataLoaded);
-            if (bgVideo.readyState >= 1 && bgVideo.duration) onVideoMetadataLoaded();
-            setTimeout(() => { if (!isVideoReady) {
-                videoDuration = bgVideo.duration || 13;
-                bodyHeight = 16000; document.body.style.height = bodyHeight + 'px';
-                updateSectionPositions(); bgVideo.currentTime = 0; isVideoReady = true; startPlaybackLoop();
-            }}, 3000);
 
-            // ============ PLAYBACK LOOP ============
+            bgVideo.addEventListener('loadedmetadata', onVideoMetadataLoaded);
+            if (bgVideo.readyState >= 1 && bgVideo.duration && !isNaN(bgVideo.duration)) {
+                onVideoMetadataLoaded();
+            }
+
+            setTimeout(() => {
+                if (!isVideoReady) {
+                    videoDuration = bgVideo.duration || 13;
+                    if (videoDuration <= 0 || isNaN(videoDuration)) videoDuration = 13;
+                    bodyHeight = Math.max(window.innerHeight * 8, videoDuration * 700 + window.innerHeight * 2);
+                    document.body.style.height = bodyHeight + 'px';
+                    updateSectionPositions();
+                    bgVideo.currentTime = 0;
+                    isVideoReady = true;
+                    startPlaybackLoop();
+                    console.log('⚠️ Video metadata timeout - using defaults');
+                }
+            }, 3000);
+
+            bgVideo.addEventListener('error', () => {
+                console.warn('⚠️ Video failed to load. Using gradient background.');
+                videoContainer.style.background = 'linear-gradient(135deg, #0a1a00 0%, #1a3a00 30%, #0a2a00 60%, #0a0a00 100%)';
+                if (!isVideoReady) {
+                    videoDuration = 13;
+                    bodyHeight = Math.max(window.innerHeight * 8, videoDuration * 700 + window.innerHeight * 2);
+                    document.body.style.height = bodyHeight + 'px';
+                    updateSectionPositions();
+                    isVideoReady = true;
+                    startPlaybackLoop();
+                }
+            });
+
+            // ============ CORE PLAYBACK LOOP ============
             function startPlaybackLoop() {
-                function loop(ts) {
-                    if (!lastTimestamp) lastTimestamp = ts;
-                    const dt = Math.min(0.1, (ts - lastTimestamp) / 1000);
-                    lastTimestamp = ts;
-                    if (isVideoReady && bgVideo.duration) {
-                        currentPlaybackRate += (targetPlaybackRate - currentPlaybackRate) * (isIdle ? 0.05 : SMOOTHING_FACTOR);
-                        const rate = Math.max(-MAX_PLAYBACK_RATE, Math.min(MAX_PLAYBACK_RATE, currentPlaybackRate));
-                        let newTime = currentVideoTime + rate * dt;
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+                function loop(timestamp) {
+                    if (!lastTimestamp) lastTimestamp = timestamp;
+                    const deltaTime = Math.min(0.1, (timestamp - lastTimestamp) / 1000);
+                    lastTimestamp = timestamp;
+
+                    if (isVideoReady && bgVideo.duration && !isNaN(bgVideo.duration)) {
+                        const smoothing = isIdle ? 0.05 : SMOOTHING_FACTOR;
+                        currentPlaybackRate += (targetPlaybackRate - currentPlaybackRate) * smoothing;
+                        const clampedRate = Math.max(-MAX_PLAYBACK_RATE, Math.min(MAX_PLAYBACK_RATE, currentPlaybackRate));
+                        let newTime = currentVideoTime + clampedRate * deltaTime;
                         if (newTime >= videoDuration) newTime -= videoDuration;
                         else if (newTime < 0) newTime += videoDuration;
-                        try { if (Math.abs(newTime - bgVideo.currentTime) > 0.008) bgVideo.currentTime = newTime; } catch(e){}
+                        newTime = Math.max(0, Math.min(videoDuration, newTime));
+                        try {
+                            if (Math.abs(newTime - bgVideo.currentTime) > 0.008) {
+                                bgVideo.currentTime = newTime;
+                            }
+                        } catch (e) {}
                         currentVideoTime = newTime;
-                        playbackLabel.textContent = rate > 0.2 ? '▶ Forward' : rate < -0.2 ? '◀ Reverse' : '⏸ Idle';
-                        speedBarFill.style.width = Math.min(100, (Math.abs(rate)/MAX_PLAYBACK_RATE)*100) + '%';
+                        updatePlaybackUI(clampedRate);
                     }
-                    scrollProgress.style.width = (window.scrollY / Math.max(1, bodyHeight - window.innerHeight) * 100) + '%';
-                    updateCardTransforms();
+                    updateScrollProgress();
+                    updateCardTransforms(window.scrollY || window.pageYOffset);
                     animationFrameId = requestAnimationFrame(loop);
                 }
                 animationFrameId = requestAnimationFrame(loop);
             }
-            function updateCardTransforms() {
-                const vh = window.innerHeight, cy = window.scrollY + vh/2;
+
+            function updatePlaybackUI(rate) {
+                const absRate = Math.abs(rate);
+                const percentage = Math.min(100, (absRate / MAX_PLAYBACK_RATE) * 100);
+                speedBarFill.style.width = percentage + '%';
+                if (rate > 0.2) {
+                    playbackIndicator.classList.remove('reversing');
+                    playbackLabel.textContent = '▶ Forward Flow';
+                } else if (rate < -0.2) {
+                    playbackIndicator.classList.add('reversing');
+                    playbackLabel.textContent = '◀ Reverse Flow';
+                } else {
+                    playbackIndicator.classList.remove('reversing');
+                    playbackLabel.textContent = '⏸ Still';
+                }
+                if (Math.abs(rate) < 0.05 && isIdle) {
+                    speedIndicator.classList.add('hidden');
+                } else {
+                    speedIndicator.classList.remove('hidden');
+                }
+            }
+
+            function updateScrollProgress() {
+                const maxScroll = Math.max(0, bodyHeight - window.innerHeight);
+                const scrollY = window.scrollY || window.pageYOffset;
+                const fraction = maxScroll > 0 ? scrollY / maxScroll : 0;
+                scrollProgress.style.width = (Math.min(1, Math.max(0, fraction)) * 100) + '%';
+            }
+
+            function updateCardTransforms(scrollY) {
+                const viewportHeight = window.innerHeight;
+                const viewportCenter = scrollY + viewportHeight / 2;
                 sectionCards.forEach(card => {
-                    const sec = card.closest('.section');
-                    if (!sec) return;
-                    const top = parseFloat(sec.style.top) || 0;
-                    const dist = (top + vh/2) - cy;
-                    const norm = Math.max(-1, Math.min(1, dist / (vh*1.3)));
-                    card.style.transform = `perspective(1200px) rotateX(${norm*22}deg) scale(${1 - Math.abs(norm)*0.15})`;
-                    card.style.opacity = 1 - Math.abs(norm)*0.65;
+                    const sectionEl = card.closest('.section');
+                    if (!sectionEl) return;
+                    const sectionTop = parseFloat(sectionEl.style.top) || 0;
+                    const sectionCenter = sectionTop + viewportHeight / 2;
+                    const distanceFromCenter = sectionCenter - viewportCenter;
+                    const maxDistance = viewportHeight * 1.3;
+                    const normalizedDistance = Math.max(-1, Math.min(1, distanceFromCenter / maxDistance));
+                    const rotateX = normalizedDistance * 22;
+X = normalizedDistance * 22;
+                                       const scale = 1 - const scale = 1 - Math.abs(normalizedDistance Math.abs(normalizedDistance) * 0.15) * 0.15;
+                    const opacity = 1 - Math.abs(normalizedDistance) * 0.65;
+                    card.style.transform = `perspective(1200px) rotateX(${rotateX}deg) scale(${Math.max(0.72, scale)})`;
+                    card.style.opacity = Math.max(0.2, opacity);
                 });
             }
 
-            // ============ SCROLL HANDLING ============
-            function onScroll() {
+            // ============ SCROLL HANDLER ============
+            function handleScroll() {
                 const now = performance.now();
-                const delta = window.scrollY - lastScrollY;
-                isIdle = false; clearTimeout(idleTimeout);
-                idleTimeout = setTimeout(() => isIdle = true, IDLE_THRESHOLD_MS);
-                if (Math.abs(delta) > 0.5) targetPlaybackRate = Math.max(-MAX_PLAYBACK_RATE, Math.min(MAX_PLAYBACK_RATE, delta * SCROLL_SENSITIVITY));
-                lastScrollY = window.scrollY;
-            }
-            window.addEventListener('scroll', onScroll, {passive:true});
-            window.addEventListener('wheel', e => {
-                if (Math.abs(e.deltaY) > 2) targetPlaybackRate += e.deltaY * SCROLL_SENSITIVITY * 0.7;
-                isIdle = false; clearTimeout(idleTimeout);
-                idleTimeout = setTimeout(() => isIdle = true, IDLE_THRESHOLD_MS);
-            }, {passive:true});
-            setInterval(() => { if (isIdle && Math.abs(currentPlaybackRate) > 0.02) targetPlaybackRate *= IDLE_DECAY; }, 100);
-
-            // ============ COUNTER ANIMATION ============
-            const counters = document.querySelectorAll('.counter');
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const el = entry.target;
-                        const target = +el.dataset.target;
-                        let count = 0;
-                        const step = () => {
-                            count += Math.ceil(target / 60);
-                            if (count >= target) { el.textContent = target; return; }
-                            el.textContent = count;
-                            requestAnimationFrame(step);
-                        };
-                        step();
-                        observer.unobserve(el);
-                    }
+                const currentScrollY = window.scrollY || window.pageYOffset;
+                const rawDelta = currentScrollY - lastScrollY;
+                is;
+                    const opacity = 1 - Math.abs(normalizedDistance) * 0.65;
+                    card.style.transform = `perspective(1200px) rotateX(${rotateX}deg) scale(${Math.max(0.72, scale)})`;
+                    card.style.opacity = Math.max(0.2, opacity);
                 });
-            }, {threshold:0.5});
-            counters.forEach(c => observer.observe(c));
+            }
 
-            // ============ FORM HANDLING ============
-            document.getElementById('contactForm')?.addEventListener('submit', e => {
-                e.preventDefault();
-                alert('Message sent! (demo)');
+            // ============ SCROLL HANDLER ============
+            function handleScroll() {
+                const now = performance.now();
+                const currentScrollY = window.scrollY || window.pageYOffset;
+                const rawDelta = currentScrollY - lastScrollY;
+                isIdle = false;
+               Idle = false;
+                lastScrollTimestamp = now;
+ lastScrollTimestamp = now;
+                if (idleTimeout                if (idleTimeout) clearTimeout(idleTimeout);
+               ) clearTimeout(idleTimeout);
+                idleTimeout = setTimeout(() => { isId idleTimeout = setTimeout(() => { isIdle = true; }, IDle = true; }, IDLE_THRESHOLD_LE_THRESHOLD_MS);
+                if (MathMS);
+                if (Math.abs(rawDelta) > .abs(rawDelta) > 0.5) {
+                   0.5) {
+                    targetPlaybackRate = rawDelta * SC targetPlaybackRate = rawDelta * SCROLL_SENSITIVITY;
+                   ROLL_SENSITIVITY;
+                    targetPlaybackRate = Math targetPlaybackRate = Math.max(-MAX_P.max(-MAX_PLAYBACK_RATE, Math.min(MAX_PLAYBACK_RLAYBACK_RATE, Math.min(MAX_PLAYBACK_RATEATE, targetPlaybackRate));
+                }
+, targetPlaybackRate));
+                }
+                last                lastScrollY = currentScrollYScrollY = currentScrollY;
+            }
+
+            function applyIdleDecay() {
+                if (isIdle && Math.abs(currentPlaybackRate) > 0.02) {
+                    targetPlaybackRate *= IDLE_DECAY;
+                    if (;
+            }
+
+            function applyIdleDecay() {
+                if (isIdle && Math.abs(currentPlaybackRate) > 0.02) {
+                    targetPlaybackRate *= IDLE_DECAY;
+                    if (Math.abs(targetPlaybackRate) < 0.015) targetPlaybackRate = 0;
+                }
+            }
+            setInterval(applyIdleDecay, 100);
+
+            window.addEventListener('scroll', handleScroll, { passive: true });
+            window.addEventListener('wheel', (e) => {
+                const wheelDelta = e.deltaY;
+                if (Math.abs(wheelDelta) > 2) {
+                    const wheelContribution = wheelDelta * SCROLL_SENSITMath.abs(targetPlaybackRate) < 0.015) targetPlaybackRate = 0;
+                }
+            }
+            setInterval(applyIdleDecay, 100);
+
+            window.addEventListener('scroll', handleScroll, { passive: true });
+            window.addEventListener('wheel', (e) => {
+                const wheelDelta = e.deltaY;
+                if (Math.abs(wheelDelta) > 2) {
+                    const wheelContribution = wheelDelta * SCROLL_SENSITIVITY * 0.7IVITY * 0.7;
+                    target;
+                    targetPlaybackRate += wheelContPlaybackRate += wheelContribution;
+                    targetPlaybackribution;
+                    targetPlaybackRate = Math.max(-MAX_PLAYBACK_RRate = Math.max(-MAX_PLAYBACK_RATEATE, Math.min(MAX, Math.min(MAX_PLAYBACK_R_PLAYBACK_RATE,ATE, targetPlaybackRate));
+                targetPlaybackRate));
+                }
+                isIdle = false;
+                }
+                isId lastScrollTimestamp = performance.now();
+le = false;
+                last                if (idleTimeoutScrollTimestamp = performance.now();
+) clearTimeout(idleTimeout                if (idleTimeout) clearTimeout(idleTimeout);
+                idleTimeout =);
+                idleTimeout = setTimeout(() => { isIdle = true; setTimeout(() => { isIdle }, IDLE_THRESHOLD_ = true; }, IDMS);
+            }, { passiveLE_THRESHOLD_MS);
+            }, { passive: true });
+
+            window.addEventListener('touchmove', () => {
+                isIdle = false;
+                lastScrollTimestamp = performance.now();
+                if (idleTimeout) clearTimeout(idleTimeout);
+                idleTimeout = setTimeout(() => { isIdle = true; }, IDLE_THRESHOLD_MS);
+            }, { passive: true });
+
+            window.addEventListener('resize', () => {
+                if (isVideoReady) {
+                    bodyHeight = Math.max(window.innerHeight * 8, videoDuration * 700 + window.inner: true });
+
+            window.addEventListener('touchmove', () => {
+                isIdle = false;
+                lastScrollTimestamp = performance.now();
+                if (idleTimeout) clearTimeout(idleTimeout);
+                idleTimeout = setTimeout(() => { isIdle = true; }, IDLE_THRESHOLD_MS);
+            }, { passive: true });
+
+            window.addEventListener('resize', () => {
+                if (isVideoReady) {
+                    bodyHeight = Math.max(window.innerHeight * 8, videoDuration * 700 + window.innerHeight * 2);
+                    document.body.style.height = bodyHeight * 2);
+                    document.body.style.height = bodyHeight + 'px';
+                   Height + 'px';
+                    updateSectionPositions();
+                updateSectionPositions();
+                }
+ }
+                updateScrollProgress();
+                updateCardTransforms                updateScrollProgress();
+                updateCardTrans(window.scrollY || windowforms(window.scrollY || window.pageYOffset);
             });
 
-            // ============ INIT ============
-            lastScrollY = window.scrollY;
-            updateSectionPositions();
-            console.log('🌟 FlowScape fully loaded — scroll to explore.');
+.pageYOffset);
+            });
+
+            window.addEventListener('keydown            window.addEventListener('keydown', (', (e) => {
+e) => {
+                if (e.key === 'Home') {                if (e.key === 'Home') { e.preventDefault(); window.sc e.preventDefault(); window.scrollrollTo({ top: 0To({ top: 0, behavior: 'smooth, behavior: 'smooth' }); }
+                else if (e.key' }); }
+                else === 'End') { e if (e.key === 'End') { e.preventDefault(); window.preventDefault(); window.scrollTo({ top: bodyHeight - window.scrollTo({ top: bodyHeight - window.innerHeight, behavior: 'smooth' }); }
+                else if (e.key === 'ArrowDown') { e.preventDefault(); window.scrollBy({ top: window.innerHeight * 0.5, behavior: 'smooth' }); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); window.scrollBy({ top: -window.innerHeight * 0.5, behavior: 'smooth' }); }
+            });
+
+            window.scrollToTop = function() {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+.innerHeight, behavior: 'smooth' }); }
+                else if (e.key === 'ArrowDown') { e.preventDefault(); window.scrollBy({ top: window.innerHeight * 0.5, behavior: 'smooth' }); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); window.scrollBy({ top: -window.innerHeight * 0.5, behavior: 'smooth' }); }
+            });
+
+            window.scrollToTop = function() {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            };
+
+            // =            // ======================= INITIAL CALLS ========= INITIAL CALLS ============
+            lastScrollY===
+            lastScrollY = window = window.scrollY || window.page.scrollY || window.pageYOffset;
+            updateScrollProgress();
+            updateYOffset;
+            updateScrollProgress();
+            updateCardTransforms(lastScrollYCardTransforms(lastScrollY);
+            console.log(');
+            console.log('🎨 Abstract🎨 Abstract Lines Lines Flow Flow with with Glass Sidebar ready.');
+        })();
+    </script>
+</body>
+</ Glass Sidebar ready.');
         })();
     </script>
 </body>
