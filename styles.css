@@ -349,7 +349,7 @@ button:focus-visible {
 
 .kpi-content strong {
   display: block;
-  font-size: clamp(24px, 2.4vw, 36px);
+  font-size: clamp(20px, 1.9vw, 30px);
   line-height: 1.05;
   font-weight: 850;
   overflow: hidden;
