@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Banking Performance Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="data.js" defer></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <main class="dashboard-shell">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img">
+          <path d="M8 34 19 23l8 7L40 14" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M30 14h10v10" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="title-block">
+        <h1>DIGITAL BANKING PERFORMANCE DASHBOARD</h1>
+        <p>Branch Performance Intelligence • 2024-25</p>
+      </div>
+      <div class="controls">
+        <label class="select-wrap">
+          <span class="sr-only">Branch</span>
+          <select id="branchFilter"></select>
+        </label>
+        <label class="select-wrap period">
+          <span class="calendar-icon" aria-hidden="true"></span>
+          <span class="sr-only">Period</span>
+          <select id="periodFilter">
+            <option>Jun 2024 - Mar 2025</option>
+          </select>
+        </label>
+        <button id="exportBtn" class="export-btn" type="button">
+          <span class="download-icon" aria-hidden="true"></span>
+          Export
+        </button>
+      </div>
+    </header>
+
+    <section class="kpi-grid" aria-label="Performance summary">
+      <article class="kpi-card blue">
+        <div class="kpi-icon people" aria-hidden="true"></div>
+        <div class="kpi-content">
+          <p class="kpi-label">TOTAL ACTIVE ACCOUNTS</p>
+          <strong id="activeTotal">0</strong>
+          <p id="activeSplit" class="kpi-sub"></p>
+        </div>
+        <div class="spark-label">Total Accounts</div>
+        <canvas id="activeSpark" class="spark" width="260" height="48"></canvas>
+      </article>
+      <article class="kpi-card purple">
+        <div class="kpi-icon phone-pay" aria-hidden="true"></div>
+        <div class="kpi-content">
+          <p class="kpi-label">IMPS REGISTRATIONS</p>
+          <strong id="impsTotal">0</strong>
+          <p id="impsSplit" class="kpi-sub"></p>
+        </div>
+        <div class="spark-label">IMPS Users</div>
+        <canvas id="impsSpark" class="spark" width="260" height="48"></canvas>
+      </article>
+      <article class="kpi-card cyan">
+        <div class="kpi-icon card-icon" aria-hidden="true"></div>
+        <div class="kpi-content">
+          <p class="kpi-label">ACTIVE DEBIT CARDS</p>
+          <strong id="cardsTotal">0</strong>
+          <p id="cardsSplit" class="kpi-sub"></p>
+        </div>
+        <div class="spark-label">Debit Cards</div>
+        <canvas id="cardsSpark" class="spark" width="260" height="48"></canvas>
+      </article>
+      <article class="kpi-card green">
+        <div class="kpi-icon mobile" aria-hidden="true"></div>
+        <div class="kpi-content">
+          <p class="kpi-label">MOBILE BANKING<br>PENETRATION</p>
+          <strong id="mobilePct">0%</strong>
+          <p id="mobileGap" class="kpi-sub"></p>
+        </div>
+        <div class="spark-label">Overall Penetration</div>
+        <canvas id="mobileSpark" class="spark" width="260" height="48"></canvas>
+      </article>
+      <article class="kpi-card orange">
+        <div class="kpi-icon debit" aria-hidden="true"></div>
+        <div class="kpi-content">
+          <p class="kpi-label">DEBIT CARD<br>PENETRATION</p>
+          <strong id="debitPct">0%</strong>
+          <p id="debitGap" class="kpi-sub"></p>
+        </div>
+        <div class="spark-label">Overall Penetration</div>
+        <canvas id="debitSpark" class="spark" width="260" height="48"></canvas>
+      </article>
+    </section>
+
+    <section class="main-grid">
+      <article class="panel trajectory-panel">
+        <div class="panel-head">
+          <h2>MONTHLY TARGET TRAJECTORY</h2>
+          <div class="segmented" role="tablist" aria-label="Target metric">
+            <button class="metric-tab active" data-metric="mobile" type="button">Mobile Banking</button>
+            <button class="metric-tab" data-metric="debit" type="button">Debit Card</button>
+          </div>
+        </div>
+        <div class="legend-row">
+          <span><i class="dot mobile-dot"></i> Mobile Target %</span>
+          <span><i class="dot debit-dot"></i> Debit Card Target %</span>
+        </div>
+        <canvas id="targetChart" class="line-chart" width="920" height="300"></canvas>
+      </article>
+
+      <article class="panel gauge-panel">
+        <h2>CURRENT VS TARGET</h2>
+        <div class="gauge-grid">
+          <section class="gauge-card mobile-gauge">
+            <h3>MOBILE BANKING PENETRATION</h3>
+            <div class="gauge-wrap">
+              <div id="mobileGauge" class="gauge" style="--value: 18.43; --accent: #36d8ff; --accent2: #316cff">
+                <div class="gauge-center"><strong id="mobileGaugeValue">0%</strong><span>Current</span></div>
+              </div>
+              <p id="mobileGaugeTarget">Target: 70%</p>
+            </div>
+            <div class="side-stats">
+              <div><span>Gap</span><strong id="mobileGapLarge">0</strong><em>pp</em></div>
+              <div><span>Additional Registrations<br>Required</span><strong id="mobileRequired">0</strong></div>
+            </div>
+          </section>
+          <section class="gauge-card debit-gauge">
+            <h3>DEBIT CARD PENETRATION</h3>
+            <div class="gauge-wrap">
+              <div id="debitGauge" class="gauge" style="--value: 32.97; --accent: #ffd14b; --accent2: #ff7a2f">
+                <div class="gauge-center"><strong id="debitGaugeValue">0%</strong><span>Current</span></div>
+              </div>
+              <p id="debitGaugeTarget">Target: 70%</p>
+            </div>
+            <div class="side-stats">
+              <div><span>Gap</span><strong id="debitGapLarge">0</strong><em>pp</em></div>
+              <div><span>Additional Cards<br>Required</span><strong id="debitRequired">0</strong></div>
+            </div>
+          </section>
+        </div>
+      </article>
+
+      <article class="panel matrix-panel">
+        <h2>BRANCH PERFORMANCE MATRIX</h2>
+        <canvas id="matrixChart" width="660" height="292"></canvas>
+        <div id="matrixTooltip" class="matrix-tooltip" hidden></div>
+        <div class="matrix-legend">
+          <span><i class="q q1"></i> ≥ 70% / ≥ 70%</span>
+          <span><i class="q q2"></i> &lt; 70% / ≥ 70%</span>
+          <span><i class="q q3"></i> ≥ 70% / &lt; 70%</span>
+          <span><i class="q q4"></i> &lt; 70% / &lt; 70%</span>
+          <small>Bubble Size = Active Accounts</small>
+        </div>
+      </article>
+
+      <article class="panel rank-panel">
+        <div class="panel-title-inline">
+          <h2>TOP 5 BRANCHES</h2>
+          <span id="rankMetricLabel">(By Mobile Banking %)</span>
+        </div>
+        <div class="rank-table">
+          <div class="rank-row head"><span>Rank</span><span>Branch Name</span><span id="rankHeader">Mobile Banking %</span></div>
+          <div id="topBranches"></div>
+        </div>
+        <button id="viewAllTop" class="wide-btn" type="button">View All Branches</button>
+      </article>
+
+      <article class="panel attention-panel">
+        <div class="panel-head tight">
+          <h2>BRANCHES REQUIRING ATTENTION</h2>
+          <button id="viewAllAttention" class="small-btn" type="button">View All</button>
+        </div>
+        <div id="attentionList" class="attention-list"></div>
+      </article>
+    </section>
+
+    <section class="panel insight-panel" aria-label="Management insights">
+      <h2>MANAGEMENT INSIGHTS</h2>
+      <div id="insightGrid" class="insight-grid"></div>
+    </section>
+  </main>
+
+  <div id="modal" class="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <h2 id="modalTitle">All Branches</h2>
+        <button id="closeModal" class="icon-btn" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="modal-table-wrap">
+        <table id="modalTable"></table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
