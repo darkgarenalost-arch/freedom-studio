@@ -1,1090 +1,196 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Credit Card Customer Report · BMC Bank</title>
-    <!-- Chart.js & Font Awesome -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
-    </script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-    <style>
-        /* ----- RESET & VARIABLES ----- */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        :root {
-            --bg-body: #f3f6fd;
-            --card-bg: #ffffff;
-            --text-primary: #0b1a33;
-            --text-secondary: #4a5a72;
-            --text-muted: #8a9bb5;
-            --accent: #2d6cfa;
-            --accent-light: #e8edfe;
-            --accent-hover: #1a56d6;
-            --green: #22b573;
-            --red: #f25767;
-            --orange: #f5a623;
-            --border: #e9edf4;
-            --shadow: 0 8px 30px rgba(0, 20, 60, 0.08);
-            --radius: 16px;
-            --radius-sm: 10px;
-            --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            --transition: 0.25s ease;
-        }
-        html {
-            font-family: var(--font);
-            font-size: 14px;
-            background: var(--bg-body);
-        }
-        body {
-            background: var(--bg-body);
-            color: var(--text-primary);
-            padding: 24px 32px 40px;
-            min-height: 100vh;
-        }
-
-        /* ----- SCROLLBAR ----- */
-        ::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--accent);
-            border-radius: 10px;
-        }
-
-        /* ----- HEADER ----- */
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 28px;
-        }
-        .dashboard-header .title-group h1 {
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: -0.4px;
-            color: var(--text-primary);
-        }
-        .dashboard-header .title-group h1 i {
-            color: var(--accent);
-            margin-right: 10px;
-        }
-        .dashboard-header .title-group p {
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin-top: 2px;
-        }
-        .dashboard-header .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .dashboard-header .header-actions .search-box {
-            background: var(--card-bg);
-            border-radius: 30px;
-            padding: 8px 18px 8px 22px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-        }
-        .dashboard-header .header-actions .search-box i {
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-        .dashboard-header .header-actions .search-box input {
-            border: none;
-            outline: none;
-            font-size: 13px;
-            padding: 6px 0;
-            width: 200px;
-            background: transparent;
-            font-family: var(--font);
-            color: var(--text-primary);
-        }
-        .dashboard-header .header-actions .search-box input::placeholder {
-            color: var(--text-muted);
-        }
-        .dashboard-header .header-actions .filter-chip {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 30px;
-            padding: 8px 18px;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: var(--transition);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: var(--shadow);
-            font-family: var(--font);
-        }
-        .dashboard-header .header-actions .filter-chip:hover {
-            background: var(--accent);
-            color: #fff;
-            border-color: var(--accent);
-        }
-        .dashboard-header .header-actions .filter-chip i {
-            font-size: 13px;
-        }
-
-        /* ----- KPI ROW ----- */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 18px;
-            margin-bottom: 28px;
-        }
-        .kpi-card {
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            padding: 20px 24px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            transition: transform var(--transition), box-shadow var(--transition);
-        }
-        .kpi-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 12px 36px rgba(0, 20, 60, 0.12);
-        }
-        .kpi-card .kpi-label {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .kpi-card .kpi-label i {
-            color: var(--accent);
-            font-size: 14px;
-        }
-        .kpi-card .kpi-value {
-            font-size: 30px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-top: 4px;
-            letter-spacing: -0.5px;
-        }
-        .kpi-card .kpi-sub {
-            font-size: 12px;
-            color: var(--text-secondary);
-            margin-top: 4px;
-        }
-        .kpi-card .kpi-sub .trend-up {
-            color: var(--green);
-            font-weight: 600;
-        }
-        .kpi-card .kpi-sub .trend-down {
-            color: var(--red);
-            font-weight: 600;
-        }
-        .kpi-card .kpi-sub i {
-            margin-right: 4px;
-        }
-
-        /* ----- CHARTS ROW ----- */
-        .charts-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 22px;
-            margin-bottom: 28px;
-        }
-        .chart-card {
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            padding: 20px 22px 18px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-        }
-        .chart-card .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 14px;
-            flex-wrap: wrap;
-        }
-        .chart-card .chart-header h3 {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        .chart-card .chart-header h3 i {
-            color: var(--accent);
-            margin-right: 8px;
-        }
-        .chart-card .chart-header .badge {
-            font-size: 11px;
-            background: var(--accent-light);
-            color: var(--accent);
-            padding: 2px 14px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-        .chart-card canvas {
-            max-height: 210px;
-            max-width: 100%;
-        }
-
-        /* ----- TABLE SECTION ----- */
-        .table-section {
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            padding: 20px 22px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border);
-            margin-bottom: 24px;
-        }
-        .table-section .table-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 14px;
-            margin-bottom: 16px;
-        }
-        .table-section .table-header h3 {
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        .table-section .table-header h3 i {
-            color: var(--accent);
-            margin-right: 8px;
-        }
-        .table-section .table-header .table-controls {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .table-section .table-header .table-controls select {
-            padding: 6px 14px;
-            border-radius: 30px;
-            border: 1px solid var(--border);
-            background: #fff;
-            font-size: 12px;
-            font-family: var(--font);
-            outline: none;
-            cursor: pointer;
-            color: var(--text-secondary);
-        }
-        .table-section .table-header .table-controls select:focus {
-            border-color: var(--accent);
-        }
-        .table-wrapper {
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-        table thead {
-            background: #f8faff;
-            border-radius: var(--radius-sm);
-        }
-        table th {
-            text-align: left;
-            padding: 12px 14px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            border-bottom: 2px solid var(--border);
-            white-space: nowrap;
-        }
-        table td {
-            padding: 11px 14px;
-            border-bottom: 1px solid #f2f6fc;
-            color: var(--text-primary);
-            white-space: nowrap;
-        }
-        table tbody tr {
-            transition: background var(--transition);
-        }
-        table tbody tr:hover {
-            background: #f8fbff;
-        }
-        table .progress-bar {
-            width: 80px;
-            height: 6px;
-            background: #e9edf4;
-            border-radius: 10px;
-            overflow: hidden;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 8px;
-        }
-        table .progress-bar .fill {
-            height: 100%;
-            border-radius: 10px;
-            background: var(--accent);
-            transition: width 0.6s ease;
-        }
-        table .fill.green {
-            background: var(--green);
-        }
-        table .fill.orange {
-            background: var(--orange);
-        }
-        table .highlight {
-            font-weight: 600;
-            color: var(--accent);
-        }
-        .table-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 16px;
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-        .table-footer .pagination {
-            display: flex;
-            gap: 4px;
-        }
-        .table-footer .pagination button {
-            padding: 4px 12px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: #fff;
-            cursor: pointer;
-            font-size: 12px;
-            transition: var(--transition);
-            font-family: var(--font);
-            color: var(--text-secondary);
-        }
-        .table-footer .pagination button.active {
-            background: var(--accent);
-            color: #fff;
-            border-color: var(--accent);
-        }
-        .table-footer .pagination button:hover:not(.active) {
-            background: #f1f5f9;
-        }
-        .table-footer .pagination button:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        /* ----- FOOTER ----- */
-        .footer-note {
-            text-align: center;
-            font-size: 12px;
-            color: var(--text-muted);
-            padding-top: 16px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .footer-note span i {
-            margin-right: 6px;
-        }
-
-        /* ----- SPECIAL ROW (Srinagar) ----- */
-        .row-special td {
-            background: #fefce8;
-        }
-        .row-special td:first-child {
-            border-left: 3px solid var(--orange);
-        }
-
-        /* ----- RESPONSIVE ----- */
-        @media (max-width: 1024px) {
-            .charts-row {
-                grid-template-columns: 1fr;
-            }
-        }
-        @media (max-width: 768px) {
-            body {
-                padding: 16px;
-            }
-            .kpi-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-            .dashboard-header .title-group h1 {
-                font-size: 20px;
-            }
-            .dashboard-header .header-actions .search-box input {
-                width: 120px;
-            }
-            .kpi-card .kpi-value {
-                font-size: 24px;
-            }
-        }
-        @media (max-width: 480px) {
-            .kpi-grid {
-                grid-template-columns: 1fr;
-            }
-            .dashboard-header .header-actions {
-                width: 100%;
-            }
-            .dashboard-header .header-actions .search-box {
-                flex: 1;
-            }
-            .dashboard-header .header-actions .search-box input {
-                width: 100%;
-            }
-        }
-
-        /* small helpers */
-        .text-accent {
-            color: var(--accent);
-        }
-        .text-muted {
-            color: var(--text-muted);
-        }
-        .fw-600 {
-            font-weight: 600;
-        }
-        .mb-1 {
-            margin-bottom: 6px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Banking Performance Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="data.js" defer></script>
+  <script src="script.js" defer></script>
 </head>
 <body>
-
-    <!-- ===== HEADER ===== -->
-    <header class="dashboard-header">
-        <div class="title-group">
-            <h1><i class="fas fa-credit-card"></i> Credit Card Customer Report</h1>
-            <p><i class="far fa-calendar-alt"></i> Data as of 30-May-2024 &bull; <span id="branchCountHeader">52</span> branches · IMPS &amp; Debit Card targets 2025</p>
-        </div>
-        <div class="header-actions">
-            <div class="search-box">
-                <i class="fas fa-search"></i>
-                <input type="text" id="tableSearch" placeholder="Search branch..." />
-            </div>
-            <button class="filter-chip" id="resetFilterBtn"><i class="fas fa-undo-alt"></i> Reset</button>
-            <button class="filter-chip"><i class="fas fa-download"></i> Export</button>
-        </div>
+  <main class="dashboard-shell">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" role="img">
+          <path d="M8 34 19 23l8 7L40 14" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M30 14h10v10" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="title-block">
+        <h1>DIGITAL BANKING PERFORMANCE DASHBOARD</h1>
+        <p>Branch Performance Intelligence • 2024-25</p>
+      </div>
+      <div class="controls">
+        <label class="select-wrap">
+          <span class="sr-only">Branch</span>
+          <select id="branchFilter"></select>
+        </label>
+        <label class="select-wrap period">
+          <span class="calendar-icon" aria-hidden="true"></span>
+          <span class="sr-only">Period</span>
+          <select id="periodFilter">
+            <option>Jun 2024 - Mar 2025</option>
+          </select>
+        </label>
+        <button id="exportBtn" class="export-btn" type="button">
+          <span class="download-icon" aria-hidden="true"></span>
+          Export
+        </button>
+      </div>
     </header>
 
-    <!-- ===== KPI GRID ===== -->
-    <section class="kpi-grid" id="kpiGrid">
-        <div class="kpi-card">
-            <div class="kpi-label"><i class="fas fa-users"></i> Total Revenue</div>
-            <div class="kpi-value" id="kpiRevenue">—</div>
-            <div class="kpi-sub"><i class="fas fa-arrow-up trend-up"></i> <span class="trend-up">12.4%</span> vs last month</div>
+    <section class="kpi-grid" aria-label="Performance summary">
+      <article class="kpi-card blue">
+        <div class="kpi-icon people" aria-hidden="true"></div>
+        <div class="kpi-content">
+          <p class="kpi-label">TOTAL ACTIVE ACCOUNTS</p>
+          <strong id="activeTotal">0</strong>
+          <p id="activeSplit" class="kpi-sub"></p>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-label"><i class="fas fa-percent"></i> Total Interest</div>
-            <div class="kpi-value" id="kpiInterest">—</div>
-            <div class="kpi-sub"><i class="fas fa-arrow-up trend-up"></i> <span class="trend-up">8.2%</span> vs last month</div>
+        <div class="spark-label">Total Accounts</div>
+        <canvas id="activeSpark" class="spark" width="260" height="48"></canvas>
+      </article>
+      <article class="kpi-card purple">
+        <div class="kpi-icon phone-pay" aria-hidden="true"></div>
+        <div class="kpi-content">
+          <p class="kpi-label">IMPS REGISTRATIONS</p>
+          <strong id="impsTotal">0</strong>
+          <p id="impsSplit" class="kpi-sub"></p>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-label"><i class="fas fa-coins"></i> Total Income</div>
-            <div class="kpi-value" id="kpiIncome">—</div>
-            <div class="kpi-sub"><i class="fas fa-arrow-up trend-up"></i> <span class="trend-up">15.6%</span> vs last month</div>
+        <div class="spark-label">IMPS Users</div>
+        <canvas id="impsSpark" class="spark" width="260" height="48"></canvas>
+      </article>
+      <article class="kpi-card cyan">
+        <div class="kpi-icon card-icon" aria-hidden="true"></div>
+        <div class="kpi-content">
+          <p class="kpi-label">ACTIVE DEBIT CARDS</p>
+          <strong id="cardsTotal">0</strong>
+          <p id="cardsSplit" class="kpi-sub"></p>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-label"><i class="fas fa-chart-line"></i> CSS</div>
-            <div class="kpi-value" id="kpiCss">—</div>
-            <div class="kpi-sub"><i class="fas fa-arrow-up trend-up"></i> <span class="trend-up">0.8</span> vs last month</div>
+        <div class="spark-label">Debit Cards</div>
+        <canvas id="cardsSpark" class="spark" width="260" height="48"></canvas>
+      </article>
+      <article class="kpi-card green">
+        <div class="kpi-icon mobile" aria-hidden="true"></div>
+        <div class="kpi-content">
+          <p class="kpi-label">MOBILE BANKING<br>PENETRATION</p>
+          <strong id="mobilePct">0%</strong>
+          <p id="mobileGap" class="kpi-sub"></p>
         </div>
-        <div class="kpi-card">
-            <div class="kpi-label"><i class="fas fa-credit-card"></i> Active Debit Cards</div>
-            <div class="kpi-value" id="kpiDebitTotal">—</div>
-            <div class="kpi-sub"><i class="fas fa-arrow-up trend-up"></i> <span class="trend-up">6.3%</span> vs last month</div>
+        <div class="spark-label">Overall Penetration</div>
+        <canvas id="mobileSpark" class="spark" width="260" height="48"></canvas>
+      </article>
+      <article class="kpi-card orange">
+        <div class="kpi-icon debit" aria-hidden="true"></div>
+        <div class="kpi-content">
+          <p class="kpi-label">DEBIT CARD<br>PENETRATION</p>
+          <strong id="debitPct">0%</strong>
+          <p id="debitGap" class="kpi-sub"></p>
         </div>
+        <div class="spark-label">Overall Penetration</div>
+        <canvas id="debitSpark" class="spark" width="260" height="48"></canvas>
+      </article>
     </section>
 
-    <!-- ===== CHARTS ROW ===== -->
-    <section class="charts-row">
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3><i class="fas fa-chart-bar"></i> Revenue by Product</h3>
-                <span class="badge">Top 5</span>
-            </div>
-            <canvas id="chartRevenueProduct"></canvas>
+    <section class="main-grid">
+      <article class="panel trajectory-panel">
+        <div class="panel-head">
+          <h2>MONTHLY TARGET TRAJECTORY</h2>
+          <div class="segmented" role="tablist" aria-label="Target metric">
+            <button class="metric-tab active" data-metric="mobile" type="button">Mobile Banking</button>
+            <button class="metric-tab" data-metric="debit" type="button">Debit Card</button>
+          </div>
         </div>
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3><i class="fas fa-chart-line"></i> Revenue vs Gender</h3>
-                <span class="badge">Quarterly</span>
-            </div>
-            <canvas id="chartRevenueGender"></canvas>
+        <div class="legend-row">
+          <span><i class="dot mobile-dot"></i> Mobile Target %</span>
+          <span><i class="dot debit-dot"></i> Debit Card Target %</span>
         </div>
+        <canvas id="targetChart" class="line-chart" width="920" height="300"></canvas>
+      </article>
+
+      <article class="panel gauge-panel">
+        <h2>CURRENT VS TARGET</h2>
+        <div class="gauge-grid">
+          <section class="gauge-card mobile-gauge">
+            <h3>MOBILE BANKING PENETRATION</h3>
+            <div class="gauge-wrap">
+              <div id="mobileGauge" class="gauge" style="--value: 18.43; --accent: #36d8ff; --accent2: #316cff">
+                <div class="gauge-center"><strong id="mobileGaugeValue">0%</strong><span>Current</span></div>
+              </div>
+              <p id="mobileGaugeTarget">Target: 70%</p>
+            </div>
+            <div class="side-stats">
+              <div><span>Gap</span><strong id="mobileGapLarge">0</strong><em>pp</em></div>
+              <div><span>Additional Registrations<br>Required</span><strong id="mobileRequired">0</strong></div>
+            </div>
+          </section>
+          <section class="gauge-card debit-gauge">
+            <h3>DEBIT CARD PENETRATION</h3>
+            <div class="gauge-wrap">
+              <div id="debitGauge" class="gauge" style="--value: 32.97; --accent: #ffd14b; --accent2: #ff7a2f">
+                <div class="gauge-center"><strong id="debitGaugeValue">0%</strong><span>Current</span></div>
+              </div>
+              <p id="debitGaugeTarget">Target: 70%</p>
+            </div>
+            <div class="side-stats">
+              <div><span>Gap</span><strong id="debitGapLarge">0</strong><em>pp</em></div>
+              <div><span>Additional Cards<br>Required</span><strong id="debitRequired">0</strong></div>
+            </div>
+          </section>
+        </div>
+      </article>
+
+      <article class="panel matrix-panel">
+        <h2>BRANCH PERFORMANCE MATRIX</h2>
+        <canvas id="matrixChart" width="660" height="292"></canvas>
+        <div id="matrixTooltip" class="matrix-tooltip" hidden></div>
+        <div class="matrix-legend">
+          <span><i class="q q1"></i> ≥ 70% / ≥ 70%</span>
+          <span><i class="q q2"></i> &lt; 70% / ≥ 70%</span>
+          <span><i class="q q3"></i> ≥ 70% / &lt; 70%</span>
+          <span><i class="q q4"></i> &lt; 70% / &lt; 70%</span>
+          <small>Bubble Size = Active Accounts</small>
+        </div>
+      </article>
+
+      <article class="panel rank-panel">
+        <div class="panel-title-inline">
+          <h2>TOP 5 BRANCHES</h2>
+          <span id="rankMetricLabel">(By Mobile Banking %)</span>
+        </div>
+        <div class="rank-table">
+          <div class="rank-row head"><span>Rank</span><span>Branch Name</span><span id="rankHeader">Mobile Banking %</span></div>
+          <div id="topBranches"></div>
+        </div>
+        <button id="viewAllTop" class="wide-btn" type="button">View All Branches</button>
+      </article>
+
+      <article class="panel attention-panel">
+        <div class="panel-head tight">
+          <h2>BRANCHES REQUIRING ATTENTION</h2>
+          <button id="viewAllAttention" class="small-btn" type="button">View All</button>
+        </div>
+        <div id="attentionList" class="attention-list"></div>
+      </article>
     </section>
 
-    <!-- ===== SECONDARY CHARTS ROW ===== -->
-    <section class="charts-row">
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3><i class="fas fa-map-marker-alt"></i> Top 5 States</h3>
-                <span class="badge">By Revenue</span>
-            </div>
-            <canvas id="chartTopStates"></canvas>
-        </div>
-        <div class="chart-card">
-            <div class="chart-header">
-                <h3><i class="fas fa-user-graduate"></i> Salary &amp; Education</h3>
-                <span class="badge">Distribution</span>
-            </div>
-            <canvas id="chartSalaryEducation"></canvas>
-        </div>
+    <section class="panel insight-panel" aria-label="Management insights">
+      <h2>MANAGEMENT INSIGHTS</h2>
+      <div id="insightGrid" class="insight-grid"></div>
     </section>
+  </main>
 
-    <!-- ===== TABLE SECTION ===== -->
-    <section class="table-section" id="tableSection">
-        <div class="table-header">
-            <h3><i class="fas fa-table"></i> Branch-wise Performance</h3>
-            <div class="table-controls">
-                <span style="font-size:12px;color:var(--text-muted);" id="tableCount">Showing 0 branches</span>
-                <select id="sortSelect">
-                    <option value="accounts">Sort by Accounts</option>
-                    <option value="imps">Sort by IMPS</option>
-                    <option value="debit">Sort by Debit Cards</option>
-                    <option value="mobilePct">Sort by Mobile %</option>
-                    <option value="debitPct">Sort by Debit %</option>
-                </select>
-            </div>
-        </div>
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Branch</th>
-                        <th>Active Accounts</th>
-                        <th>IMPS Reg.</th>
-                        <th>Debit Cards</th>
-                        <th>Mobile %</th>
-                        <th>Debit %</th>
-                        <th>Target Mobile</th>
-                        <th>Target Debit</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <!-- rows injected by JS -->
-                </tbody>
-            </table>
-        </div>
-        <div class="table-footer">
-            <span id="tableInfo">Showing 1–10 of 0</span>
-            <div class="pagination" id="paginationControls"></div>
-        </div>
-    </section>
-
-    <!-- ===== FOOTER ===== -->
-    <div class="footer-note">
-        <span><i class="fas fa-database"></i> Data as of 30-May-2024 · Targets projected through Mar 2025</span>
-        <span><i class="fas fa-building"></i> <span id="branchCountFooter">0</span> branches · <i class="fas fa-credit-card"></i> BMC Bank</span>
+  <div id="modal" class="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head">
+        <h2 id="modalTitle">All Branches</h2>
+        <button id="closeModal" class="icon-btn" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="modal-table-wrap">
+        <table id="modalTable"></table>
+      </div>
     </div>
-
-    <!-- =================================================================== -->
-    <!-- JAVASCRIPT -->
-    <!-- =================================================================== -->
-    <script>
-        // ===================================================================
-        //  DATA  –  extracted from the Excel (52 branches)
-        // ===================================================================
-        const branchData = [
-            { id: '019', name: 'Abdul Rehman Street', accounts: 1606, imps: 271, debit: 479, mobilePct: 16.87,
-                debitPct: 29.83, targetMobile: 70, targetDebit: 70 },
-            { id: '180', name: 'Ajmer', accounts: 1651, imps: 324, debit: 815, mobilePct: 19.62, debitPct: 49.36,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '203', name: 'Aligarh', accounts: 3594, imps: 677, debit: 1531, mobilePct: 18.84, debitPct: 42.60,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '020', name: 'Andheri', accounts: 3505, imps: 774, debit: 1366, mobilePct: 22.08, debitPct: 38.97,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '155', name: 'Aurangabad Cidco', accounts: 1729, imps: 195, debit: 577, mobilePct: 11.28,
-                debitPct: 33.37, targetMobile: 70, targetDebit: 70 },
-            { id: '154', name: 'Aurangabad Ladies', accounts: 1921, imps: 255, debit: 395, mobilePct: 13.27,
-                debitPct: 20.56, targetMobile: 70, targetDebit: 70 },
-            { id: '153', name: 'Aurangabad Main', accounts: 8925, imps: 1143, debit: 3143, mobilePct: 12.81,
-                debitPct: 35.22, targetMobile: 70, targetDebit: 70 },
-            { id: '021', name: 'Bandra', accounts: 1622, imps: 412, debit: 584, mobilePct: 25.40, debitPct: 36.00,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '166', name: 'Baroda', accounts: 1713, imps: 340, debit: 343, mobilePct: 19.85, debitPct: 20.02,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '022', name: 'Bhiwandi', accounts: 11548, imps: 1584, debit: 3855, mobilePct: 13.72, debitPct: 33.38,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '208', name: 'Bhopal', accounts: 3361, imps: 1179, debit: 1374, mobilePct: 35.08, debitPct: 40.88,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '003', name: 'Byculla', accounts: 1891, imps: 277, debit: 442, mobilePct: 14.65, debitPct: 23.37,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '017', name: 'Colaba', accounts: 1566, imps: 358, debit: 626, mobilePct: 22.86, debitPct: 39.97,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '200', name: 'Delhi', accounts: 8918, imps: 1304, debit: 2815, mobilePct: 14.62, debitPct: 31.57,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '004', name: 'Ebrahim Rehmatoola Road', accounts: 2368, imps: 492, debit: 714, mobilePct: 20.78,
-                debitPct: 30.15, targetMobile: 70, targetDebit: 70 },
-            { id: '005', name: 'Fort', accounts: 1176, imps: 193, debit: 500, mobilePct: 16.41, debitPct: 42.52,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '161', name: 'Gandhi Road', accounts: 2161, imps: 285, debit: 436, mobilePct: 13.19, debitPct: 20.18,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '014', name: 'Girgaon', accounts: 1608, imps: 212, debit: 214, mobilePct: 13.18, debitPct: 13.31,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '002', name: 'Head Office', accounts: 3926, imps: 901, debit: 1337, mobilePct: 22.95, debitPct: 34.06,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '158', name: 'Hyderabad', accounts: 1976, imps: 570, debit: 773, mobilePct: 28.85, debitPct: 39.12,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '202', name: 'Jaipur', accounts: 1635, imps: 339, debit: 826, mobilePct: 20.73, debitPct: 50.52,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '201', name: 'Jodhpur', accounts: 2186, imps: 227, debit: 285, mobilePct: 10.38, debitPct: 13.04,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '006', name: 'Jogeshwari', accounts: 3609, imps: 690, debit: 1378, mobilePct: 19.12, debitPct: 38.18,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '015', name: 'Kempc Corner', accounts: 1169, imps: 116, debit: 171, mobilePct: 9.92, debitPct: 14.63,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '162', name: 'Khanpur Road', accounts: 4655, imps: 839, debit: 1414, mobilePct: 18.02, debitPct: 30.38,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '007', name: 'Khara Tank Road', accounts: 1971, imps: 408, debit: 568, mobilePct: 20.70, debitPct: 28.82,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '156', name: 'Khuldabad', accounts: 530, imps: 60, debit: 168, mobilePct: 11.32, debitPct: 31.70,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '210', name: 'Kolkatta', accounts: 1255, imps: 250, debit: 420, mobilePct: 19.92, debitPct: 33.47,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '008', name: 'Kurla', accounts: 5991, imps: 956, debit: 1980, mobilePct: 15.96, debitPct: 33.05,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '205', name: 'Lucknow', accounts: 4857, imps: 1110, debit: 1845, mobilePct: 22.85, debitPct: 37.99,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '009', name: 'Mahim', accounts: 1196, imps: 155, debit: 174, mobilePct: 12.96, debitPct: 14.55,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '018', name: 'Malad', accounts: 1775, imps: 331, debit: 408, mobilePct: 18.65, debitPct: 22.99,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '160', name: 'Malegaon', accounts: 3068, imps: 425, debit: 378, mobilePct: 13.85, debitPct: 12.32,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '010', name: 'Maulana Azad Road', accounts: 5677, imps: 1142, debit: 2206, mobilePct: 20.12,
-                debitPct: 38.86, targetMobile: 70, targetDebit: 70 },
-            { id: '204', name: 'Moradabad', accounts: 4258, imps: 821, debit: 1596, mobilePct: 19.28, debitPct: 37.48,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '011', name: 'Musafir Khanna', accounts: 1934, imps: 535, debit: 717, mobilePct: 27.66, debitPct: 37.07,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '157', name: 'Nanded', accounts: 4498, imps: 653, debit: 1443, mobilePct: 14.52, debitPct: 32.08,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '159', name: 'Nanded Extention', accounts: 977, imps: 464, debit: 350, mobilePct: 47.49, debitPct: 35.82,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '012', name: 'Nullbazar', accounts: 4190, imps: 657, debit: 984, mobilePct: 15.68, debitPct: 23.48,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '013', name: "P. D'mello Road", accounts: 1411, imps: 306, debit: 357, mobilePct: 21.69, debitPct: 25.30,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '164', name: 'Palanpur', accounts: 1336, imps: 194, debit: 439, mobilePct: 14.52, debitPct: 32.86,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '026', name: 'Panvel', accounts: 1547, imps: 275, debit: 400, mobilePct: 17.78, debitPct: 25.86,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '207', name: 'Patna', accounts: 1459, imps: 268, debit: 568, mobilePct: 18.37, debitPct: 38.93,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '101', name: 'Pune', accounts: 1531, imps: 288, debit: 760, mobilePct: 18.81, debitPct: 49.64,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '163', name: 'Relief Road', accounts: 4254, imps: 563, debit: 891, mobilePct: 13.23, debitPct: 20.94,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '025', name: 'Santacruz', accounts: 2385, imps: 529, debit: 861, mobilePct: 22.18, debitPct: 36.10,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '151', name: 'Solapur', accounts: 1891, imps: 311, debit: 1077, mobilePct: 16.45, debitPct: 56.95,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '215', name: '* Srinagar', accounts: 681, imps: 255, debit: 636, mobilePct: 37.44, debitPct: 93.39,
-                targetMobile: 70, targetDebit: 100 },
-            { id: '216', name: 'Srinagar Extention', accounts: 598, imps: 195, debit: 177, mobilePct: 32.61,
-                debitPct: 29.60, targetMobile: 70, targetDebit: 70 },
-            { id: '165', name: 'Surat', accounts: 2359, imps: 487, debit: 803, mobilePct: 20.64, debitPct: 34.04,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '206', name: 'Varanasi', accounts: 2880, imps: 955, debit: 1120, mobilePct: 33.16, debitPct: 38.89,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '023', name: 'Vashi Sector-17', accounts: 1557, imps: 254, debit: 488, mobilePct: 16.31, debitPct: 31.34,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '016', name: 'Vashi Sector-7', accounts: 1339, imps: 253, debit: 404, mobilePct: 18.89, debitPct: 30.17,
-                targetMobile: 70, targetDebit: 70 },
-            { id: '024', name: 'Versova', accounts: 2007, imps: 480, debit: 658, mobilePct: 23.92, debitPct: 32.79,
-                targetMobile: 70, targetDebit: 70 }
-        ];
-
-        // ===================================================================
-        //  STATE
-        // ===================================================================
-        let filteredData = [...branchData];
-        let currentPage = 1;
-        const rowsPerPage = 10;
-        let sortKey = 'accounts';
-        let sortAsc = false;
-        let searchTerm = '';
-
-        // ===================================================================
-        //  DOM REFS
-        // ===================================================================
-        const kpiRevenue = document.getElementById('kpiRevenue');
-        const kpiInterest = document.getElementById('kpiInterest');
-        const kpiIncome = document.getElementById('kpiIncome');
-        const kpiCss = document.getElementById('kpiCss');
-        const kpiDebitTotal = document.getElementById('kpiDebitTotal');
-        const tableBody = document.getElementById('tableBody');
-        const tableInfo = document.getElementById('tableInfo');
-        const tableCount = document.getElementById('tableCount');
-        const branchCountHeader = document.getElementById('branchCountHeader');
-        const branchCountFooter = document.getElementById('branchCountFooter');
-        const paginationControls = document.getElementById('paginationControls');
-        const tableSearch = document.getElementById('tableSearch');
-        const sortSelect = document.getElementById('sortSelect');
-        const resetFilterBtn = document.getElementById('resetFilterBtn');
-
-        // ===================================================================
-        //  UPDATE KPI
-        // ===================================================================
-        function updateKPI() {
-            const totalAccounts = branchData.reduce((s, b) => s + b.accounts, 0);
-            const totalImps = branchData.reduce((s, b) => s + b.imps, 0);
-            const totalDebit = branchData.reduce((s, b) => s + b.debit, 0);
-            const avgMobile = branchData.reduce((s, b) => s + b.mobilePct, 0) / branchData.length;
-            const avgDebit = branchData.reduce((s, b) => s + b.debitPct, 0) / branchData.length;
-
-            // Map to "Credit Card" style metrics
-            const revenue = (totalAccounts * 0.042).toFixed(1);
-            const interest = (totalImps * 0.018).toFixed(1);
-            const income = (totalDebit * 0.035 + totalImps * 0.022).toFixed(1);
-            const css = (avgMobile / 100 * 4.2 + avgDebit / 100 * 2.8).toFixed(2);
-
-            kpiRevenue.textContent = '$' + revenue + 'M';
-            kpiInterest.textContent = '$' + interest + 'M';
-            kpiIncome.textContent = '$' + income + 'M';
-            kpiCss.textContent = css;
-            kpiDebitTotal.textContent = totalDebit.toLocaleString();
-
-            branchCountHeader.textContent = branchData.length;
-            branchCountFooter.textContent = branchData.length;
-        }
-
-        // ===================================================================
-        //  RENDER TABLE
-        // ===================================================================
-        function renderTable() {
-            const term = searchTerm.toLowerCase().trim();
-            let data = branchData.filter(b => b.name.toLowerCase().includes(term));
-
-            data.sort((a, b) => {
-                let va = a[sortKey] ?? 0;
-                let vb = b[sortKey] ?? 0;
-                if (typeof va === 'string') va = va.toLowerCase();
-                if (typeof vb === 'string') vb = vb.toLowerCase();
-                if (va < vb) return sortAsc ? -1 : 1;
-                if (va > vb) return sortAsc ? 1 : -1;
-                return 0;
-            });
-
-            filteredData = data;
-            const total = data.length;
-            const totalPages = Math.ceil(total / rowsPerPage) || 1;
-            if (currentPage > totalPages) currentPage = totalPages;
-            const start = (currentPage - 1) * rowsPerPage;
-            const end = Math.min(start + rowsPerPage, total);
-            const pageItems = data.slice(start, end);
-
-            tableBody.innerHTML = '';
-            if (pageItems.length === 0) {
-                tableBody.innerHTML =
-                    `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text-muted);">No branches found</td></tr>`;
-            } else {
-                pageItems.forEach((b, idx) => {
-                    const row = document.createElement('tr');
-                    if (b.name.includes('Srinagar')) row.classList.add('row-special');
-                    const num = start + idx + 1;
-                    const mobileBar = Math.min(b.mobilePct, 100);
-                    const debitBar = Math.min(b.debitPct, 100);
-                    const fillClass1 = mobileBar > 50 ? 'green' : (mobileBar > 30 ? 'orange' : '');
-                    const fillClass2 = debitBar > 50 ? 'green' : (debitBar > 30 ? 'orange' : '');
-                    row.innerHTML = `
-                        <td>${num}</td>
-                        <td><strong>${b.name}</strong></td>
-                        <td>${b.accounts.toLocaleString()}</td>
-                        <td>${b.imps.toLocaleString()}</td>
-                        <td>${b.debit.toLocaleString()}</td>
-                        <td>
-                            <span class="progress-bar"><span class="fill ${fillClass1}" style="width:${mobileBar}%;"></span></span>
-                            ${b.mobilePct.toFixed(1)}%
-                        </td>
-                        <td>
-                            <span class="progress-bar"><span class="fill ${fillClass2}" style="width:${debitBar}%;"></span></span>
-                            ${b.debitPct.toFixed(1)}%
-                        </td>
-                        <td>${b.targetMobile}%</td>
-                        <td>${b.targetDebit}%</td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-            }
-
-            tableInfo.textContent = `Showing ${total === 0 ? 0 : start + 1}–${end} of ${total}`;
-            tableCount.textContent = `Showing ${total} branches`;
-
-            paginationControls.innerHTML = '';
-            if (totalPages > 1) {
-                const prevBtn = document.createElement('button');
-                prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
-                prevBtn.disabled = currentPage === 1;
-                prevBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--;
-                        renderTable(); } });
-                paginationControls.appendChild(prevBtn);
-
-                for (let i = 1; i <= totalPages; i++) {
-                    const btn = document.createElement('button');
-                    btn.textContent = i;
-                    if (i === currentPage) btn.classList.add('active');
-                    btn.addEventListener('click', () => { currentPage = i;
-                        renderTable(); });
-                    paginationControls.appendChild(btn);
-                }
-
-                const nextBtn = document.createElement('button');
-                nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
-                nextBtn.disabled = currentPage === totalPages;
-                nextBtn.addEventListener('click', () => { if (currentPage < totalPages) { currentPage++;
-                        renderTable(); } });
-                paginationControls.appendChild(nextBtn);
-            }
-        }
-
-        // ===================================================================
-        //  CHARTS
-        // ===================================================================
-        let chartRevenueProduct = null;
-        let chartRevenueGender = null;
-        let chartTopStates = null;
-        let chartSalaryEducation = null;
-
-        function initCharts() {
-            // 1) Revenue by Product (using account tiers as proxy for "product")
-            const productLabels = ['Pro Plan', 'Business Plan', 'Enterprise Plan', 'Add-ons'];
-            const sorted = [...branchData].sort((a, b) => b.accounts - a.accounts);
-            const top25 = sorted.slice(0, 25);
-            const pro = top25.filter(b => b.accounts > 3000).reduce((s, b) => s + b.accounts, 0);
-            const biz = top25.filter(b => b.accounts > 1500 && b.accounts <= 3000).reduce((s, b) => s + b.accounts, 0);
-            const ent = top25.filter(b => b.accounts > 800 && b.accounts <= 1500).reduce((s, b) => s + b.accounts, 0);
-            const addon = top25.filter(b => b.accounts <= 800).reduce((s, b) => s + b.accounts, 0);
-            const productData = [pro, biz, ent, addon].map(v => +(v * 0.031).toFixed(1));
-
-            const ctx1 = document.getElementById('chartRevenueProduct').getContext('2d');
-            if (chartRevenueProduct) chartRevenueProduct.destroy();
-            chartRevenueProduct = new Chart(ctx1, {
-                type: 'doughnut',
-                data: {
-                    labels: productLabels,
-                    datasets: [{
-                        data: productData,
-                        backgroundColor: ['#2d6cfa', '#5b8dfa', '#8ab4fa', '#c5d9fc'],
-                        borderWidth: 0,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { boxWidth: 12, font: { size: 11 }, padding: 12 }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: (ctx) => `${ctx.label}: $${ctx.raw}M`
-                            }
-                        }
-                    },
-                    cutout: '70%',
-                }
-            });
-
-            // 2) Revenue vs Gender (quarterly simulated)
-            const quarters = ['Jan 2023', 'Apr 2023', 'Jul 2023', 'Oct 2023'];
-            const states = ['TX', 'NY', 'CA', 'FL', 'NJ'];
-            const colors = ['#2d6cfa', '#5b8dfa', '#8ab4fa', '#b5cdfa', '#d6e3fc'];
-
-            const ctx2 = document.getElementById('chartRevenueGender').getContext('2d');
-            if (chartRevenueGender) chartRevenueGender.destroy();
-            chartRevenueGender = new Chart(ctx2, {
-                type: 'bar',
-                data: {
-                    labels: quarters,
-                    datasets: states.map((state, idx) => ({
-                        label: state,
-                        data: quarters.map((_, qi) => +(0.44 + qi * 0.08 + idx * 0.03).toFixed(2)),
-                        backgroundColor: colors[idx % colors.length],
-                        borderColor: colors[idx % colors.length],
-                        borderWidth: 1,
-                        borderRadius: 3,
-                    }))
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: { boxWidth: 12, font: { size: 10 } }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: (ctx) => `${ctx.dataset.label}: $${ctx.raw}M`
-                            }
-                        }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { font: { size: 10 }, callback: (v) => '$' + v + 'M' } },
-                        x: { ticks: { font: { size: 10 } } }
-                    }
-                }
-            });
-
-            // 3) Top 5 States (using top 5 branches as proxy)
-            const top5 = [...branchData].sort((a, b) => b.accounts - a.accounts).slice(0, 5);
-            const stateLabels = top5.map(b => b.name.length > 12 ? b.name.slice(0, 10) + '…' : b.name);
-            const stateVals = top5.map(b => +(b.accounts * 0.0045).toFixed(1));
-
-            const ctx3 = document.getElementById('chartTopStates').getContext('2d');
-            if (chartTopStates) chartTopStates.destroy();
-            chartTopStates = new Chart(ctx3, {
-                type: 'bar',
-                data: {
-                    labels: stateLabels,
-                    datasets: [{
-                        label: 'Revenue (M)',
-                        data: stateVals,
-                        backgroundColor: ['#2d6cfa', '#5b8dfa', '#8ab4fa', '#b5cdfa', '#d6e3fc'],
-                        borderColor: '#2d6cfa',
-                        borderWidth: 1,
-                        borderRadius: 4,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: (ctx) => `$${ctx.raw}M`
-                            }
-                        }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { font: { size: 10 }, callback: (v) => '$' + v + 'M' } },
-                        x: { ticks: { font: { size: 10 } } }
-                    }
-                }
-            });
-
-            // 4) Salary & Education (distribution)
-            const eduLabels = ['Graduate', 'High School', 'Unknown', 'Post-Graduate', 'Doctorate'];
-            const eduData = [13, 11, 13, 11, 11];
-            const salaryData = [15, 10, 5]; // High, Mid, Low
-
-            const ctx4 = document.getElementById('chartSalaryEducation').getContext('2d');
-            if (chartSalaryEducation) chartSalaryEducation.destroy();
-            chartSalaryEducation = new Chart(ctx4, {
-                type: 'bar',
-                data: {
-                    labels: eduLabels,
-                    datasets: [{
-                        label: 'Education Level',
-                        data: eduData,
-                        backgroundColor: 'rgba(45,108,250,0.7)',
-                        borderColor: '#2d6cfa',
-                        borderWidth: 1,
-                        borderRadius: 4,
-                    }, {
-                        label: 'Salary Group',
-                        data: [15, 10, 5, 8, 6],
-                        backgroundColor: 'rgba(245,166,35,0.7)',
-                        borderColor: '#f5a623',
-                        borderWidth: 1,
-                        borderRadius: 4,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: { boxWidth: 12, font: { size: 10 } }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}M`
-                            }
-                        }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { font: { size: 10 }, callback: (v) => v + 'M' } },
-                        x: { ticks: { font: { size: 9 } } }
-                    }
-                }
-            });
-        }
-
-        // ===================================================================
-        //  EVENT BINDINGS
-        // ===================================================================
-        tableSearch.addEventListener('input', (e) => {
-            searchTerm = e.target.value;
-            currentPage = 1;
-            renderTable();
-        });
-
-        sortSelect.addEventListener('change', (e) => {
-            sortKey = e.target.value;
-            sortAsc = false;
-            currentPage = 1;
-            renderTable();
-        });
-
-        resetFilterBtn.addEventListener('click', () => {
-            tableSearch.value = '';
-            searchTerm = '';
-            sortKey = 'accounts';
-            sortAsc = false;
-            sortSelect.value = 'accounts';
-            currentPage = 1;
-            renderTable();
-        });
-
-        // ===================================================================
-        //  INIT
-        // ===================================================================
-        updateKPI();
-        renderTable();
-        initCharts();
-
-        // Re-render charts on resize
-        let resizeTimer;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(() => {
-                if (chartRevenueProduct) chartRevenueProduct.resize();
-                if (chartRevenueGender) chartRevenueGender.resize();
-                if (chartTopStates) chartTopStates.resize();
-                if (chartSalaryEducation) chartSalaryEducation.resize();
-            }, 200);
-        });
-
-        // Animate progress bars on load
-        document.querySelectorAll('.progress-bar .fill').forEach(el => {
-            const w = el.style.width;
-            el.style.width = '0%';
-            setTimeout(() => { el.style.width = w; }, 150);
-        });
-
-        console.log('✅ Credit Card Dashboard loaded. Branches:', branchData.length);
-    </script>
+  </div>
 </body>
 </html>
