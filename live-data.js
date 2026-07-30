@@ -5,13 +5,12 @@
    ---- SETUP (free, no API key / no billing account needed) --------------
    1. In Google Drive, right-click your Excel file → Open with →
       Google Sheets. This creates a linked Google Sheets copy — from now on
-      just keep editing that Sheet (it opens/saves .xlsx fine too, so you
-      haven't lost Excel, you've just gained a free live-updating source).
+      just keep editing that Sheet (it openource).
    2. In the Sheet: File → Share → Publish to web → pick the correct
       sheet/tab → format "Comma-separated values (.csv)" → Publish.
    3. Copy the link it gives you and paste it below as CSV_URL.
    ------------------------------------------------------------------------ */
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQbiiScOZ_ss0CdiBdpGdzJLf6TXp2Bpl0ra4bb1molXRUDo5CZ_f0utvISp24w1Q/pub?gid=464887534&single=true&output=csv";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRADuwtWKQqQNa0E1xMCAVA_2CZo6tpcd8F8pGcmuXr9CU1naNKpFQCpGKR7cnGL71KcVnRii8Bb5zb/pub?gid=775004196&single=true&output=csv";
 
 // How often to re-fetch the sheet, in milliseconds. 2 minutes by default.
 const REFRESH_INTERVAL_MS = 2 * 60 * 1000;
