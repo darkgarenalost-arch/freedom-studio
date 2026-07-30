@@ -1,4 +1,4 @@
-const source = window.DASHBOARD_DATA;
+let source = window.DASHBOARD_DATA;
 
 const state = {
   metric: "mobile",
@@ -10,9 +10,26 @@ const els = {};
 
 document.addEventListener("DOMContentLoaded", () => {
   cacheElements();
-  populateBranchFilter();
-  bindEvents();
-  renderDashboard();
+
+  Promise.resolve(window.__liveDataReady).finally(() => {
+    source = window.DASHBOARD_DATA;
+    populateBranchFilter();
+    bindEvents();
+    renderDashboard();
+  });
+
+  window.onLiveDataRefreshed = () => {
+    source = window.DASHBOARD_DATA;
+    const previousValue = els.branchFilter.value;
+    populateBranchFilter();
+    if ([...els.branchFilter.options].some((opt) => opt.value === previousValue)) {
+      els.branchFilter.value = previousValue;
+      state.branch = previousValue;
+    } else {
+      state.branch = "all";
+    }
+    renderDashboard();
+  };
 });
 
 function cacheElements() {

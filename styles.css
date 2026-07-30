@@ -205,6 +205,16 @@ button:focus-visible {
   font: inherit;
 }
 
+.live-status {
+  font-size: 13px;
+  color: #8fb5eb;
+  white-space: nowrap;
+}
+
+.live-status.error {
+  color: #ff8a8a;
+}
+
 .export-btn:hover,
 .small-btn:hover,
 .wide-btn:hover,
