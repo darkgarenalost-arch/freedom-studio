@@ -10,7 +10,7 @@
       sheet/tab → format "Comma-separated values (.csv)" → Publish.
    3. Copy the link it gives you and paste it below as CSV_URL.
    ------------------------------------------------------------------------ */
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRADuwtWKQqQNa0E1xMCAVA_2CZo6tpcd8F8pGcmuXr9CU1naNKpFQCpGKR7cnGL71KcVnRii8Bb5zb/pub?gid=775004196&single=true&output=csv";
+const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRADuwtWKQqQNa0E1xMCAVA_2CZo6tpcd8F8pGcmuXr9CU1naNKpFQCpGKR7cnGL71KcVnRii8Bb5zb/pub?output=csv";
 
 // How often to re-fetch the sheet, in milliseconds. 2 minutes by default.
 const REFRESH_INTERVAL_MS = 2 * 60 * 1000;
