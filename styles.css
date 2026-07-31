@@ -137,6 +137,16 @@ body::before {
     linear-gradient(135deg, #fff 50%, transparent 50%) right 16px center / 8px 8px no-repeat;
 }
 
+.select-wrap select option {
+  color: #071934;
+  background: #fff;
+}
+
+.select-wrap select option:checked {
+  color: #fff;
+  background: #2268d8;
+}
+
 .select-wrap select:focus,
 button:focus-visible {
   outline: 2px solid #78b3ff;
@@ -243,12 +253,12 @@ button:focus-visible {
 }
 
 .kpi-card {
-  min-height: 220px;
-  padding: 26px 22px 15px;
+  min-height: 234px;
+  padding: 24px 20px 15px;
   display: grid;
-  grid-template-columns: 82px 1fr;
-  grid-template-rows: 132px 1fr;
-  column-gap: 18px;
+  grid-template-columns: 82px minmax(0, 1fr);
+  grid-template-rows: 142px 1fr;
+  column-gap: 16px;
 }
 
 .kpi-card::before,
@@ -368,12 +378,12 @@ button:focus-visible {
 }
 
 .kpi-sub {
-  margin: 15px 0 0;
+  margin: 13px 0 0;
   color: #fff;
-  font-size: 18px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: clamp(14px, 0.9vw, 17px);
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .spark-label {
@@ -515,8 +525,8 @@ button:focus-visible {
 .gauge-card {
   min-height: 330px;
   display: grid;
-  grid-template-columns: 1.18fr 0.78fr;
-  gap: 16px;
+  grid-template-columns: minmax(170px, 1fr) minmax(150px, 0.8fr);
+  gap: 12px;
   padding: 20px 18px;
   border: 1px solid rgba(101, 168, 255, 0.45);
   border-radius: var(--radius);
@@ -625,10 +635,9 @@ button:focus-visible {
   display: block;
   margin-top: 6px;
   color: #4d8cff;
-  font-size: clamp(20px, 2.2vw, 32px);
+  font-size: clamp(24px, 1.7vw, 32px);
   line-height: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
   white-space: nowrap;
 }
 
