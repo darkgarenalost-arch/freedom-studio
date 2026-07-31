@@ -1,205 +1,331 @@
-/* =========================================================================
-   LIVE DATA LOADER — pulls branch data from a Google Sheet published as
-   CSV, and rebuilds window.DASHBOARD_DATA from the raw numbers, on a timer.
+/*
+  Google Sheet connector for the dashboard.
 
-   ---- SETUP (free, no API key / no billing account needed) --------------
-   1. In Google Drive, right-click your Excel file → Open with →
-      Google Sheets. This creates a linked Google Sheets copy — from now on
-      just keep editing that Sheet (it openource).
-   2. In the Sheet: File → Share → Publish to web → pick the correct
-      sheet/tab → format "Comma-separated values (.csv)" → Publish.
-   3. Copy the link it gives you and paste it below as CSV_URL.
-   ------------------------------------------------------------------------ */
-const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRADuwtWKQqQNa0E1xMCAVA_2CZo6tpcd8F8pGcmuXr9CU1naNKpFQCpGKR7cnGL71KcVnRii8Bb5zb/pub?output=csv";
+  Recommended setup:
+  1. In Google Sheets, use File > Share > Publish to web.
+  2. Publish the data tab as CSV.
+  3. Paste that CSV link into publishedCsvUrl below.
 
-// How often to re-fetch the sheet, in milliseconds. 2 minutes by default.
-const REFRESH_INTERVAL_MS = 2 * 60 * 1000;
-
-// Column header aliases. Add any header text your sheet actually uses —
-// matching is case-insensitive and ignores extra spaces/punctuation.
-const HEADER_ALIASES = {
-  srNo: ["sr no", "sr.no", "s no", "serial no", "sr"],
-  name: ["branch name", "branch", "name"],
-  sbActive: ["sb active accounts", "sb active", "active sb"],
-  caActive: ["ca active accounts", "ca active", "active ca"],
-  sbImps: ["sb imps", "imps sb"],
-  caImps: ["ca imps", "imps ca"],
-  sbDebit: ["sb debit cards", "sb debit", "debit sb", "sb debit card"],
-  caDebit: ["ca debit cards", "ca debit", "debit ca", "ca debit card"],
+  For a private Sheet, deploy a Google Apps Script web app that returns:
+  JSON.stringify({ values: SpreadsheetApp.getActiveSheet().getDataRange().getValues() })
+  Then paste the web app URL into appsScriptUrl.
+*/
+const GOOGLE_SHEET_CONFIG = {
+  publishedCsvUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRADuwtWKQqQNa0E1xMCAVA_2CZo6tpcd8F8pGcmuXr9CU1naNKpFQCpGKR7cnGL71KcVnRii8Bb5zb/pub?gid=775004196&single=true&output=csv",
+  appsScriptUrl: "",
+  spreadsheetId: "",
+  gid: "",
+  sheetName: "Sheet1 (2)",
+  refreshMs: 15000,
 };
 
-const MONTH_LABELS = [
-  "Jun 2024", "Jul 2024", "Aug 2024", "Sep 2024", "Oct 2024",
-  "Nov 2024", "Dec 2024", "Jan 2025", "Feb 2025", "Mar 2025",
-];
-const TARGET_PCT = 70;
+(function initLiveData() {
+  const emptyData = makeEmptyData();
+  window.DASHBOARD_DATA = window.DASHBOARD_DATA || emptyData;
+  window.__liveDataReady = loadLiveData();
+  window.refreshLiveData = loadLiveData;
 
-function normalizeHeader(text) {
-  return String(text || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-}
-
-function buildHeaderMap(headerRow) {
-  const normalized = headerRow.map(normalizeHeader);
-  const map = {};
-  Object.keys(HEADER_ALIASES).forEach((field) => {
-    const aliases = HEADER_ALIASES[field].map(normalizeHeader);
-    const idx = normalized.findIndex((h) => aliases.includes(h));
-    if (idx !== -1) map[field] = idx;
-  });
-  return map;
-}
-
-function toNumber(value) {
-  const n = Number(String(value ?? "0").replace(/,/g, ""));
-  return Number.isFinite(n) ? n : 0;
-}
-
-function computeMetric(currentCount, active) {
-  const currentPct = active > 0 ? (currentCount / active) * 100 : 0;
-  const targetAccounts = Math.max(active * (TARGET_PCT / 100), currentCount);
-  const targetPct = active > 0 ? (targetAccounts / active) * 100 : TARGET_PCT;
-  const gapPct = Math.max(0, targetPct - currentPct);
-  const additionalRequired = Math.max(0, targetAccounts - currentCount);
-  const targets = [];
-  for (let k = 1; k <= 10; k++) {
-    targets.push(currentCount + (k * (targetAccounts - currentCount)) / 10);
+  if (GOOGLE_SHEET_CONFIG.refreshMs > 0) {
+    window.setInterval(() => loadLiveData(false), GOOGLE_SHEET_CONFIG.refreshMs);
   }
-  return {
-    metric: { currentPct, gapPct, additionalRequired, targetAccounts, targetPct },
-    targets,
-  };
-}
+}());
 
-function buildBranch(row, headerMap) {
-  const get = (field) => (field in headerMap ? row[headerMap[field]] : undefined);
-  const sbActive = toNumber(get("sbActive"));
-  const caActive = toNumber(get("caActive"));
-  const sbImps = toNumber(get("sbImps"));
-  const caImps = toNumber(get("caImps"));
-  const sbDebit = toNumber(get("sbDebit"));
-  const caDebit = toNumber(get("caDebit"));
-
-  const activeTotal = sbActive + caActive;
-  const impsTotal = sbImps + caImps;
-  const debitTotal = sbDebit + caDebit;
-
-  const mobile = computeMetric(impsTotal, activeTotal);
-  const debit = computeMetric(debitTotal, activeTotal);
-
-  const rawName = String(get("name") || "").trim();
-  const displayName = rawName.replace(/^\*+\s*/, "");
-
-  return {
-    srNo: String(get("srNo") || ""),
-    name: rawName,
-    displayName,
-    specialCase: false,
-    activeAccounts: { sb: sbActive, ca: caActive, total: activeTotal },
-    imps: { sb: sbImps, ca: caImps, total: impsTotal },
-    debitCards: { sb: sbDebit, ca: caDebit, total: debitTotal },
-    mobile: mobile.metric,
-    debit: debit.metric,
-    mobileTargets: mobile.targets,
-    debitTargets: debit.targets,
-  };
-}
-
-function buildDashboardData(rows) {
-  if (!rows.length) throw new Error("No header row found in the sheet.");
-  const headerMap = buildHeaderMap(rows[0]);
-  const required = ["name", "sbActive", "caActive", "sbImps", "caImps", "sbDebit", "caDebit"];
-  const missing = required.filter((f) => !(f in headerMap));
-  if (missing.length) {
-    throw new Error("Missing expected column(s): " + missing.join(", "));
+async function loadLiveData(showLoading = true) {
+  const url = buildSheetUrl();
+  if (!url) {
+    setLiveStatus("Add Google Sheet URL in live-data.js", true);
+    return window.DASHBOARD_DATA;
   }
 
+  try {
+    if (showLoading) setLiveStatus("Refreshing data...");
+    const response = await fetch(withCacheBust(url), { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const text = await response.text();
+    const rows = parseSheetResponse(text);
+    window.DASHBOARD_DATA = buildDashboardData(rows);
+    setLiveStatus(`Updated ${new Date().toLocaleTimeString()}`);
+
+    if (typeof window.onLiveDataRefreshed === "function") {
+      window.onLiveDataRefreshed();
+    }
+    return window.DASHBOARD_DATA;
+  } catch (error) {
+    console.error("Unable to load Google Sheet data", error);
+    setLiveStatus("Google Sheet data unavailable", true);
+    return window.DASHBOARD_DATA;
+  }
+}
+
+function buildSheetUrl() {
+  const config = GOOGLE_SHEET_CONFIG;
+  if (config.appsScriptUrl) return config.appsScriptUrl;
+  if (config.publishedCsvUrl) return config.publishedCsvUrl;
+  if (!config.spreadsheetId) return "";
+
+  const base = `https://docs.google.com/spreadsheets/d/${encodeURIComponent(config.spreadsheetId)}/gviz/tq`;
+  const params = new URLSearchParams({ tqx: "out:csv" });
+  if (config.gid) params.set("gid", config.gid);
+  if (!config.gid && config.sheetName) params.set("sheet", config.sheetName);
+  return `${base}?${params.toString()}`;
+}
+
+function withCacheBust(url) {
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}_=${Date.now()}`;
+}
+
+function parseSheetResponse(text) {
+  const trimmed = text.trim();
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    const json = JSON.parse(trimmed);
+    if (Array.isArray(json)) return json;
+    if (Array.isArray(json.values)) return json.values;
+    if (Array.isArray(json.data)) return json.data;
+    if (Array.isArray(json.rows)) return json.rows;
+    if (json.branches && json.overall) return json;
+    throw new Error("JSON response does not contain values/data/rows.");
+  }
+
+  if (window.Papa) {
+    return window.Papa.parse(trimmed, {
+      skipEmptyLines: false,
+    }).data;
+  }
+
+  return simpleCsvParse(trimmed);
+}
+
+function buildDashboardData(input) {
+  if (input && input.branches && input.overall) return input;
+
+  const rows = input.map((row) => Array.isArray(row) ? row : Object.values(row));
+  const monthLabels = getMonthLabels(rows);
   const branches = rows
-    .slice(1)
-    .filter((row) => row.some((cell) => String(cell ?? "").trim() !== ""))
-    .map((row) => buildBranch(row, headerMap));
-
-  const totals = branches.reduce(
-    (acc, b) => {
-      acc.sbActive += b.activeAccounts.sb;
-      acc.caActive += b.activeAccounts.ca;
-      acc.sbImps += b.imps.sb;
-      acc.caImps += b.imps.ca;
-      acc.sbDebit += b.debitCards.sb;
-      acc.caDebit += b.debitCards.ca;
-      return acc;
-    },
-    { sbActive: 0, caActive: 0, sbImps: 0, caImps: 0, sbDebit: 0, caDebit: 0 }
-  );
-
-  const overallActive = totals.sbActive + totals.caActive;
-  const overallImps = totals.sbImps + totals.caImps;
-  const overallDebit = totals.sbDebit + totals.caDebit;
-  const overallMobile = computeMetric(overallImps, overallActive);
-  const overallDebitMetric = computeMetric(overallDebit, overallActive);
+    .slice(4)
+    .map(rowToBranch)
+    .filter(Boolean);
 
   return {
-    overall: {
-      sourceFile: "Live: Google Drive",
-      months: MONTH_LABELS,
-      targetPct: TARGET_PCT,
-      activeAccounts: { sb: totals.sbActive, ca: totals.caActive, total: overallActive },
-      imps: { sb: totals.sbImps, ca: totals.caImps, total: overallImps },
-      debitCards: { sb: totals.sbDebit, ca: totals.caDebit, total: overallDebit },
-      mobile: overallMobile.metric,
-      debit: overallDebitMetric.metric,
-      mobileTargets: overallMobile.targets,
-      debitTargets: overallDebitMetric.targets,
-    },
+    overall: makeOverall(branches, monthLabels),
     branches,
   };
 }
 
-async function fetchCsvRows() {
-  const bustCache = (CSV_URL.includes("?") ? "&" : "?") + "cachebust=" + Date.now();
-  const response = await fetch(CSV_URL + bustCache);
-  if (!response.ok) {
-    throw new Error(`Sheet fetch failed (${response.status})`);
+function rowToBranch(row) {
+  const branchName = cleanText(row[1]);
+  if (!branchName || branchName.toUpperCase() === "TOTAL") return null;
+  if (!row[0] && !toNumber(row[2]) && !toNumber(row[4])) return null;
+
+  const activeTotal = toNumber(row[4]) || toNumber(row[2]) + toNumber(row[3]);
+  const impsTotal = toNumber(row[7]) || toNumber(row[5]) + toNumber(row[6]);
+  const cardTotal = toNumber(row[10]) || toNumber(row[8]) + toNumber(row[9]);
+  const targetPct = toPercentNumber(row[15]) || toPercentNumber(row[21]) || 70;
+  const mobileTargets = row.slice(22, 32).map(toNumber);
+  const debitTargets = row.slice(33, 43).map(toNumber);
+  const specialCase = branchName.startsWith("*");
+  const displayName = branchName.replace(/^\*\s*/, "");
+
+  return {
+    code: cleanText(row[0]),
+    name: slug(displayName),
+    displayName,
+    specialCase,
+    activeAccounts: {
+      sb: toNumber(row[2]),
+      ca: toNumber(row[3]),
+      total: activeTotal,
+    },
+    imps: {
+      sb: toNumber(row[5]),
+      ca: toNumber(row[6]),
+      total: impsTotal,
+    },
+    debitCards: {
+      sb: toNumber(row[8]),
+      ca: toNumber(row[9]),
+      total: cardTotal,
+    },
+    mobile: {
+      currentPct: toPercentNumber(row[11]) || percent(impsTotal, activeTotal),
+      gapPct: toPercentNumber(row[12]),
+      additionalRequired: toNumber(row[13]),
+      targetAccounts: toNumber(row[14]) || activeTotal * targetPct / 100,
+      targetPct,
+    },
+    debit: {
+      currentPct: toPercentNumber(row[17]) || percent(cardTotal, activeTotal),
+      gapPct: toPercentNumber(row[18]),
+      additionalRequired: toNumber(row[19]),
+      targetAccounts: toNumber(row[20]) || activeTotal * targetPct / 100,
+      targetPct,
+    },
+    mobileTargets,
+    debitTargets,
+  };
+}
+
+function getMonthLabels(rows) {
+  const monthRow = rows[3] || [];
+  const labels = monthRow.slice(22, 32).map(formatMonth).filter(Boolean);
+  return labels.length ? labels : ["Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"];
+}
+
+function makeOverall(branches, months) {
+  const overall = {
+    months,
+    targetPct: 70,
+    activeAccounts: sumGroup(branches, "activeAccounts"),
+    imps: sumGroup(branches, "imps"),
+    debitCards: sumGroup(branches, "debitCards"),
+    mobile: {},
+    debit: {},
+  };
+
+  overall.mobile = makeMetricOverall(branches, "mobile", "mobileTargets", overall.imps.total, overall.activeAccounts.total);
+  overall.debit = makeMetricOverall(branches, "debit", "debitTargets", overall.debitCards.total, overall.activeAccounts.total);
+  return overall;
+}
+
+function makeMetricOverall(branches, metric, targetKey, currentTotal, activeTotal) {
+  const targetPct = 70;
+  const targetAccounts = activeTotal * targetPct / 100;
+  return {
+    currentPct: percent(currentTotal, activeTotal),
+    gapPct: Math.max(0, targetPct - percent(currentTotal, activeTotal)),
+    additionalRequired: Math.max(0, targetAccounts - currentTotal),
+    targetAccounts,
+    targetPct,
+    targets: sumSeries(branches, targetKey),
+    targetPcts: sumSeries(branches, targetKey).map((value) => percent(value, activeTotal)),
+  };
+}
+
+function sumGroup(branches, key) {
+  return branches.reduce((total, branch) => ({
+    sb: total.sb + branch[key].sb,
+    ca: total.ca + branch[key].ca,
+    total: total.total + branch[key].total,
+  }), { sb: 0, ca: 0, total: 0 });
+}
+
+function sumSeries(branches, key) {
+  const length = Math.max(10, ...branches.map((branch) => branch[key].length));
+  return Array.from({ length }, (_, index) =>
+    branches.reduce((sum, branch) => sum + (Number(branch[key][index]) || 0), 0)
+  );
+}
+
+function toNumber(value) {
+  if (value instanceof Date) return 0;
+  const normalized = cleanText(value).replace(/,/g, "").replace(/%/g, "");
+  const number = Number(normalized);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function toPercentNumber(value) {
+  const text = cleanText(value);
+  if (!text) return 0;
+  const number = toNumber(text);
+  if (text.includes("%") && number <= 1) return number * 100;
+  return number;
+}
+
+function percent(value, base) {
+  return base ? (value / base) * 100 : 0;
+}
+
+function cleanText(value) {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
+}
+
+function formatMonth(value) {
+  if (value instanceof Date) {
+    return value.toLocaleString("en", { month: "short" });
   }
-  const text = await response.text();
-  const parsed = Papa.parse(text.trim(), { skipEmptyLines: true });
-  if (parsed.errors && parsed.errors.length) {
-    console.warn("CSV parse warnings:", parsed.errors);
+
+  const text = cleanText(value);
+  if (!text) return "";
+  const parsed = new Date(text);
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed.toLocaleString("en", { month: "short" });
   }
-  return parsed.data;
+  return text.slice(0, 3);
 }
 
-async function loadLiveData() {
-  const rows = await fetchCsvRows();
-  window.DASHBOARD_DATA = buildDashboardData(rows);
+function slug(value) {
+  return cleanText(value).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
-function setLiveStatus(text, isError) {
-  const el = document.getElementById("liveStatus");
-  if (!el) return;
-  el.textContent = text;
-  el.classList.toggle("error", !!isError);
+function setLiveStatus(message, isError = false) {
+  const status = document.getElementById("liveStatus");
+  if (!status) return;
+  status.textContent = message;
+  status.classList.toggle("error", isError);
 }
 
-async function refreshLiveData() {
-  setLiveStatus("Refreshing…", false);
-  try {
-    await loadLiveData();
-    const stamp = new Date().toLocaleTimeString();
-    setLiveStatus(`Live • updated ${stamp}`, false);
-    if (typeof window.onLiveDataRefreshed === "function") {
-      window.onLiveDataRefreshed();
+function makeEmptyData() {
+  return {
+    overall: {
+      months: ["Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar"],
+      targetPct: 70,
+      activeAccounts: { sb: 0, ca: 0, total: 0 },
+      imps: { sb: 0, ca: 0, total: 0 },
+      debitCards: { sb: 0, ca: 0, total: 0 },
+      mobile: {
+        currentPct: 0,
+        gapPct: 70,
+        additionalRequired: 0,
+        targetAccounts: 0,
+        targetPct: 70,
+        targets: Array(10).fill(0),
+        targetPcts: Array(10).fill(0),
+      },
+      debit: {
+        currentPct: 0,
+        gapPct: 70,
+        additionalRequired: 0,
+        targetAccounts: 0,
+        targetPct: 70,
+        targets: Array(10).fill(0),
+        targetPcts: Array(10).fill(0),
+      },
+    },
+    branches: [],
+  };
+}
+
+function simpleCsvParse(text) {
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let quoted = false;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    const next = text[i + 1];
+
+    if (char === '"' && quoted && next === '"') {
+      cell += '"';
+      i += 1;
+    } else if (char === '"') {
+      quoted = !quoted;
+    } else if (char === "," && !quoted) {
+      row.push(cell);
+      cell = "";
+    } else if ((char === "\n" || char === "\r") && !quoted) {
+      if (char === "\r" && next === "\n") i += 1;
+      row.push(cell);
+      rows.push(row);
+      row = [];
+      cell = "";
+    } else {
+      cell += char;
     }
-  } catch (err) {
-    console.error("Live data refresh failed:", err);
-    setLiveStatus("Data refresh failed — check console", true);
   }
+
+  row.push(cell);
+  rows.push(row);
+  return rows;
 }
-
-// Kick off the first load immediately, then poll on an interval.
-window.__liveDataReady = refreshLiveData();
-setInterval(refreshLiveData, REFRESH_INTERVAL_MS);
-
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("refreshBtn");
-  if (btn) btn.addEventListener("click", refreshLiveData);
-});

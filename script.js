@@ -40,7 +40,7 @@ function cacheElements() {
     "mobileRequired", "debitRequired", "targetChart", "matrixChart", "matrixTooltip", "topBranches",
     "rankMetricLabel", "rankHeader", "attentionList", "insightGrid", "exportBtn", "modal", "modalTitle",
     "modalTable", "closeModal", "viewAllTop", "viewAllAttention", "activeSpark", "impsSpark", "cardsSpark",
-    "mobileSpark", "debitSpark",
+    "mobileSpark", "debitSpark", "liveStatus", "refreshBtn",
   ].forEach((id) => {
     els[id] = document.getElementById(id);
   });
@@ -48,7 +48,7 @@ function cacheElements() {
 
 function populateBranchFilter() {
   els.branchFilter.innerHTML = '<option value="all">All Branches</option>';
-  source.branches
+  (source.branches || [])
     .slice()
     .sort((a, b) => a.displayName.localeCompare(b.displayName))
     .forEach((branch) => {
@@ -79,6 +79,11 @@ function bindEvents() {
   });
 
   els.exportBtn.addEventListener("click", exportCsv);
+  els.refreshBtn.addEventListener("click", () => {
+    if (typeof window.refreshLiveData === "function") {
+      window.refreshLiveData(true);
+    }
+  });
   els.viewAllTop.addEventListener("click", () => showBranchTable("All Branches - Performance Ranking", rankedBranches(state.metric)));
   els.viewAllAttention.addEventListener("click", () => showBranchTable("Branches Requiring Attention", attentionBranches()));
   els.closeModal.addEventListener("click", closeModal);
@@ -109,6 +114,7 @@ function renderCharts() {
 function selectedData() {
   if (state.branch === "all") return source.overall;
   const branch = source.branches.find((item) => item.name === state.branch);
+  if (!branch) return source.overall;
   return normalizeBranch(branch);
 }
 
@@ -179,6 +185,10 @@ function renderRankings() {
   setText("rankMetricLabel", `(By ${label})`);
   setText("rankHeader", label);
   const rows = rankedBranches(state.metric).slice(0, 5);
+  if (!rows.length) {
+    els.topBranches.innerHTML = '<div class="rank-row"><span>-</span><span>No data loaded</span><span>-</span></div>';
+    return;
+  }
   const max = Math.max(...rows.map((branch) => branch[state.metric].currentPct), 70);
   els.topBranches.innerHTML = rows.map((branch, index) => {
     const value = branch[state.metric].currentPct;
@@ -196,7 +206,12 @@ function renderRankings() {
 }
 
 function renderAttention() {
-  els.attentionList.innerHTML = attentionBranches().slice(0, 5).map((branch, index) => {
+  const rows = attentionBranches().slice(0, 5);
+  if (!rows.length) {
+    els.attentionList.innerHTML = '<div class="attention-item"><b>-</b><span>No data loaded</span><small></small><small></small></div>';
+    return;
+  }
+  els.attentionList.innerHTML = rows.map((branch, index) => {
     const gap = Math.max(0, branch.mobile.gapPct);
     return `
       <div class="attention-item">
@@ -215,13 +230,19 @@ function renderInsights() {
   const selected = selectedData();
   const context = selected.branchName ? selected.branchName : "Overall";
   const special = source.branches.find((branch) => branch.specialCase);
+  if (!topMobile || !topDebit) {
+    els.insightGrid.innerHTML = '<div class="insight"><i class="target-mini" aria-hidden="true"></i><span>Connect a Google Sheet to load live branch insights.</span></div>';
+    return;
+  }
   const insights = [
     { icon: "growth", text: `${topMobile.displayName} has the highest Mobile Banking penetration at ${pct(topMobile.mobile.currentPct)}` },
     { icon: "card-mini", text: `${topDebit.displayName} has the highest Debit Card penetration at ${pct(topDebit.debit.currentPct)}` },
     { icon: "users-mini", text: `Total ${number(total.imps.total)} IMPS registrations from ${number(total.activeAccounts.total)} active accounts (${pct(total.mobile.currentPct)} penetration)` },
     { icon: "target-mini", text: `${context} Mobile Banking requires ${number(selected.mobile.additionalRequired)} additional registrations to reach target` },
     { icon: "card-mini", text: `${context} Debit Cards require ${number(selected.debit.additionalRequired)} additional cards to reach target` },
-    { icon: "bank-mini", text: `${special.displayName} uses a special debit-card target base as per bank configuration` },
+    special
+      ? { icon: "bank-mini", text: `${special.displayName} uses a special debit-card target base as per bank configuration` }
+      : { icon: "bank-mini", text: `Dashboard is connected to ${number(source.branches.length)} branch records` },
   ];
 
   els.insightGrid.innerHTML = insights.map((item) => `
@@ -337,7 +358,7 @@ function drawMatrixChart() {
   const pad = { left: 66, right: 22, top: 14, bottom: 48 };
   const plotW = w - pad.left - pad.right;
   const plotH = h - pad.top - pad.bottom;
-  const maxAccounts = Math.max(...source.branches.map((branch) => branch.activeAccounts.total));
+  const maxAccounts = Math.max(1, ...source.branches.map((branch) => branch.activeAccounts.total));
   state.matrixPoints = [];
 
   ctx.clearRect(0, 0, w, h);
@@ -466,6 +487,10 @@ function drawSpark(canvas, values, color) {
   const ctx = fitted.getContext("2d");
   const w = fitted.width;
   const h = fitted.height;
+  if (!values.length) {
+    ctx.clearRect(0, 0, w, h);
+    return;
+  }
   const pad = 4 * devicePixelRatio;
   const min = Math.min(...values);
   const max = Math.max(...values);
@@ -493,11 +518,11 @@ function drawSpark(canvas, values, color) {
 }
 
 function rankedBranches(metric) {
-  return source.branches.slice().sort((a, b) => b[metric].currentPct - a[metric].currentPct);
+  return (source.branches || []).slice().sort((a, b) => b[metric].currentPct - a[metric].currentPct);
 }
 
 function attentionBranches() {
-  return source.branches
+  return (source.branches || [])
     .slice()
     .sort((a, b) => b.mobile.gapPct - a.mobile.gapPct || b.mobile.additionalRequired - a.mobile.additionalRequired);
 }
@@ -542,6 +567,7 @@ function exportCsv() {
   const rows = state.branch === "all"
     ? source.branches
     : source.branches.filter((branch) => branch.name === state.branch);
+  if (!rows.length) return;
   const header = [
     "Branch", "Active SB", "Active CA", "Active Total", "IMPS SB", "IMPS CA", "IMPS Total",
     "Debit SB", "Debit CA", "Debit Total", "Mobile %", "Mobile Gap pp", "Mobile Need",
